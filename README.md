@@ -13,7 +13,7 @@ The following three R scripts contain the code to run the agent-based model (ABM
 
 3. ***Aggdf_mainFunctions.R***: contains code to aggregate individual-level information to  population-level data measurements.   
 
-The following two R scripts are used to conduct the analyses and generate figures.
+The following two R scripts are used to conduct the analyses and generate figures:
 
 4. ***MainAnalyses_and_Figures.R***: contains the code to conduct the main analyses pertaining to objectives 1-3 and to generate figures 3-6.
 
@@ -24,7 +24,7 @@ All simulated data necessary to recreate the analyses and the figures is located
 ### Dependencies
 
 * Simulations and analyses were performed using R (R Core Team 2023) (version 4.3.1) with computations performed on the Niagara supercomputer at the SciNet HPC Consortium (Loken et al. 2010; Ponce et al. 2019).
-* R packages necessary to recreate the analyses and figures include igraph (Csardi and Nepusz 2006) (version 1.5.1), graph4lg (Savary et al. 2021)(version 1.8.0) and data.table (Matt Dowle and Arun Srinivasan 2023) (version 1.14.8).
+* R packages necessary to recreate the analyses and figures include igraph (Csardi and Nepusz 2006) (version 1.5.1), graph4lg (Savary et al. 2021) (version 1.8.0) and data.table (Matt Dowle and Arun Srinivasan 2023) (version 1.14.8).
 
 
 
