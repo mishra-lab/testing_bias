@@ -1,4 +1,4 @@
-# Overview
+## Overview
 
 This repository contains the simulated data and code necessary to run the analyses and produce the figures for the manuscript, "Impact of unequal testing on vaccine effectiveness estimates across two study designs: a simulation study".
 
