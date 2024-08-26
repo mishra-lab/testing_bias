@@ -1,5 +1,4 @@
-setwd("C:/Users/Korryn/Desktop/Testing Biases/Github Documents")
-
+#Load in necessary files and packages to run the model
 source("ABM_mainFunctions.R")
 source("Aggdf_mainFunctions.R")
 require(igraph)
@@ -14,7 +13,7 @@ args <- commandArgs(trailingOnly = TRUE)
 ve.susc<- 0.1 #as.numeric(args[1]) #VE against Susc
 ve.infect<- 0.2 #as.numeric(args[2])  #VE against Infect
 covid.prob.trans<-0.1 #as.numeric(args[3])  #Probability of transmission per contact
-epi.real.num<- 5 #as.numeric(args[4]) #simulationnumber
+epi.real.num<- 5 #as.numeric(args[4]) #simulationnumber (this is an arbitrary value)
 
 seed.no<-sample.int(1e9, 1) 
 
