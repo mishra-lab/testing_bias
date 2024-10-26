@@ -177,7 +177,7 @@ Cum.Prop.False.Neg.0.55<-ggplot(aggDF.ves0.55, aes(x=t, y=CumProp_falseNeg_unvac
                   bordercolour="grey20",borderwidth=0.4,linewidth=main.line.width)+
   scale_color_manual(values=group.colors, labels=names) +
   scale_fill_manual(values=group.colors, labels=names) +
-  labs(y="Cumulative Proportion of Misclassification from Non-Detection\n(i.e. False Negatives)", x = "Days") +
+  labs(y="Cumulative Proportion of Misclassification\ndue to Missed Detection", x = "Days") +
   theme(axis.text.x = element_text(color = "grey20", size = 18, angle = 0, hjust = .5, vjust = .5, face = "plain"),
         axis.text.y = element_text(color = "grey20", size = 18, angle = 0, hjust = .5, vjust = 0, face = "plain"),  
         axis.title.x = element_text(color = "grey20", size = 20, angle = 0, hjust = .5, vjust = 0, face = "plain"),
@@ -203,7 +203,7 @@ Cum.Prop.False.Neg.0.1<-ggplot(aggDF.ves0.1, aes(x=t, y=CumProp_falseNeg_unvac.5
                   bordercolour="grey20",borderwidth=0.4,linewidth=main.line.width)+
   scale_color_manual(values=group.colors, labels=names) +
   scale_fill_manual(values=group.colors, labels=names) +
-  labs(y="Cumulative Proportion of Misclassification from Non-Detection\n(i.e. False Negatives)", x = "Days") +
+  labs(y="Cumulative Proportion of Misclassification\ndue to Missed Detection", x = "Days") +
   theme(axis.text.x = element_text(color = "grey20", size = 18, angle = 0, hjust = .5, vjust = .5, face = "plain"),
         axis.text.y = element_text(color = "grey20", size = 18, angle = 0, hjust = .5, vjust = 0, face = "plain"),  
         axis.title.x = element_text(color = "grey20", size = 20, angle = 0, hjust = .5, vjust = 0, face = "plain"),
