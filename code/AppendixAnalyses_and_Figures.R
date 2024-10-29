@@ -330,7 +330,7 @@ dev.off()
 #WITH VACCINATION STATUS AND COVID-LIKE SYMPTOMS DUE TO ALTERNATE ETIOLOGIES
 
 #Uses same data as Appendix Figure 3
-#Mean cumulative numbers of those vaccinated and testing "negative" in the Equal Testing Scenario
+#Mean cumulative numbers of those vaccinated and testing "negative" in the Equal Testing Scenario given low and high prevalances
 low.vac.equal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_vac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.05 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="equal"]))
 low.vac.equal
 high.vac.equal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_vac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.2 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="equal"]))
@@ -339,7 +339,7 @@ high.vac.equal
 #Proportional Increase for Vaccinated
 (high.vac.equal - low.vac.equal)/low.vac.equal
 
-#Mean cumulative numbers of those unvaccinated and testing "negative" in the Equal Testing Scenario
+#Mean cumulative numbers of those unvaccinated and testing "negative" in the Equal Testing Scenario given low and high prevalances
 low.unvac.equal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_unvac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.05 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="equal"]))
 low.unvac.equal
 high.unvac.equal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_unvac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.2 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="equal"]))
@@ -348,7 +348,7 @@ high.unvac.equal
 #Proportional Increase for Unvaccinated
 (high.unvac.equal - low.unvac.equal)/low.unvac.equal
 
-#Mean cumulative numbers of those vaccinated and testing "negative" in the Highly Unequal Testing Scenario
+#Mean cumulative numbers of those vaccinated and testing "negative" in the Highly Unequal Testing Scenario given low and high prevalances
 #Vaccinated
 low.vac.unequal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_vac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.05 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="highUnequal"]))
 low.vac.unequal
@@ -358,7 +358,7 @@ high.vac.unequal
 #Proportional Increase for Vaccinated
 (high.vac.unequal - low.vac.unequal)/low.vac.unequal 
 
-#Mean cumulative numbers of those unvaccinated and testing "negative" in the Highly Unequal Testing Scenario
+#Mean cumulative numbers of those unvaccinated and testing "negative" in the Highly Unequal Testing Scenario given low and high prevalances
 low.unvac.unequal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_unvac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.05 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="highUnequal"]))
 low.unvac.unequal
 high.unvac.unequal<-round(mean(df.ve.susc0.1_other.etiologies.sens.high$NonCovid_cumSymptInfect_tested_unvac[df.ve.susc0.1_other.etiologies.sens.high$NonCovid_propSympt==0.2 & df.ve.susc0.1_other.etiologies.sens.high$Label_testingDiff=="highUnequal"]))
