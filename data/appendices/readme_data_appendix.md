@@ -10,5 +10,5 @@ All datasets listed in this folder are called in by AppendixAnalyses_and_Figures
 - *df.ves0.55_highChange.peak.csv*: contains all variables sampled at the point of highest epidemic growth and at the epidemic peak, compiled from each of the 100 csv files when vaccine efficacy against susceptibility is higher (located in the *obj.1_ve.susc.0.55* folder)
 
 ### Objective 2 Datasets Overview (datasets in the *sens.analyses* folder):
-*df.ve.susc.0.1_prob.trans.sens* and *df.ve.susc.0.55_prob.trans.sens*: contains quantile summaries for selected variables (0%, 25%, 50%, 75%, 100%) across varying levels of probability of transmission (0.03, 0.05, 0.07, 0.09,0.11) when efficacy against susceptibility is lower and higher, respectively. 
-*df.ve.susc.0.1_prob.trans.sens_highchange*: contains the median value of selected variables at the point of highest epidemic growth across different probabilities of transmission (0.03, 0.05, 0.07, 0.09,0.11) when efficacy against susceptibility is lower. 
+- *df.ve.susc.0.1_prob.trans.sens* and *df.ve.susc.0.55_prob.trans.sens*: contains quantile summaries for selected variables (0%, 25%, 50%, 75%, 100%) across varying levels of probability of transmission (0.03, 0.05, 0.07, 0.09,0.11) when efficacy against susceptibility is lower and higher, respectively. 
+- *df.ve.susc.0.1_prob.trans.sens_highchange*: contains the median value of selected variables at the point of highest epidemic growth across different probabilities of transmission (0.03, 0.05, 0.07, 0.09,0.11) when efficacy against susceptibility is lower. 
