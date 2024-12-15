@@ -15,9 +15,9 @@ The following three R scripts contain the code to run the agent-based model (ABM
 
 The following two R scripts are used to conduct the analyses and generate figures:
 
-4. ***MainAnalyses_and_Figures.R***: contains the code to conduct the main analyses pertaining to objectives 1-3 and to generate figures 3-6 and supplementary figure 1.
+4. ***MainAnalyses_and_Figures.R***: contains the code to conduct the main analyses pertaining to objectives 1-3 and to generate figures 3-6.
 
-5. ***AppendixAnalyses_and_Figures.R***: contains the code to conduct the supporting analyses found in the supplementary information and to generate most supplementary figures.
+5. ***AppendixAnalyses_and_Figures.R***: contains the code to conduct the supporting analyses found in the supplementary information and to generate supplementary figures.
 
 All simulated data necessary to recreate the analyses and the figures is located in the "data" folder; copies of all figures can be found in the "figures" folder.
 
