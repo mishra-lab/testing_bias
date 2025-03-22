@@ -172,15 +172,7 @@ aggdf_Stats<-function(agg.df=NA, level=NA, ve.susc=NA, inds.test.df=NA, df.inds.
   
   ## CREATE RANDOM TESTING DATASET BY SAMPLING A RANDOM TEST PER INDIVIDUAL
   sampled.df<-testSampling_function(inds.test.df=inds.test.df)
-  
-  #IF AT CERTAIN TIME POINTS, CREATE THE COUNDS
-  if ((ve.susc==0.1 & (ts == 50 | ts == 70)) | (ve.susc==0.55 & (ts == 70 | ts == 90))){
     
-    cumul.counts.time_function(sampled.data=sampled.df, level=level, ve.susc=ve.susc,
-                               N=N, N.vac=N.vac, N.unvac=N.unvac, ts=ts, epi.real.num = epi.real.num)
-  }
-  
-  
   #CALCULATE SAMPLE SIZES BY VAC AND COVID STATUS USING RANDOM TESTING SAMPLED DATA
   agg.df<-agg.df_addSampleSize_function(sampled.data=sampled.df,agg.df=agg.df, index=index)
   
