@@ -1,7 +1,3 @@
-#setwd("C:/Users/Korryn/Desktop/Testing Biases/Github Documents/for nat_comm/revisions_3/new code")
-
-#setwd("C:/Users/Korryn/Desktop/Testing Biases/Github Documents")
-
 source("ABM_mainFunctions.R")
 source("Aggdf_appFunctions_withTime.R")
 source("IndTestdf_appFunctions.R")
