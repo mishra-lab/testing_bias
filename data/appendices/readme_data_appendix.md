@@ -2,8 +2,8 @@
 All datasets listed in this folder are called in by AppendixAnalyses_and_Figures.R to generate the figures and analyses found in the Supplementary Material. 
 
 ### Objective 1 Datasets Overview:
-- *aggDF.ves0.1.csv*: contains percentile summaries (2.5%, 50%, 97.5%) for selected variables, aggregated from the 100 csv files when vaccine efficacy against susceptibility is lower (located in the *obj.1_ve.susc.0.1* folder)
-- *aggDF.ves0.55.csv*: contains percentile summaries (2.5%, 50%, 97.5%) for selected variables, aggregated from the 100 csv files when vaccine efficacy against susceptibility is higher (located in the *obj.1_ve.susc.0.55* folder)
+- *aggDF.ves0.1_app.csv*: contains percentile summaries (2.5%, 50%, 97.5%) for selected variables, aggregated from the 100 csv files when vaccine efficacy against susceptibility is lower (located in the *obj.1_ve.susc.0.1* folder)
+- *aggDF.ves0.55_app.csv*: contains percentile summaries (2.5%, 50%, 97.5%) for selected variables, aggregated from the 100 csv files when vaccine efficacy against susceptibility is higher (located in the *obj.1_ve.susc.0.55* folder)
 - *df.vs.susc0.1_other.etiologies.sens.high.csv*: contains all variables sampled at the point of highest epidemic growth across different prevalances of COVID-like symptoms due to other etiologies (0.05, 0.1, 0.15, 0.2) when vaccine efficacy against susceptibility is lower. Sampled data comes from 100 epidemic realizations.
 - *df.vs.susc0.1_withTimeAnalysis.csv*: contains symptomatic vaccine effectiveness estimates when accounting for time and the corresponding statistical model coefficients required to create those estimates (2.5%, 50%, 97.5%) when vaccine efficacy against susceptibility is lower. Sampled data comes from 100 epidemic realizations. 
 - *df.vs.susc0.55_other.etiologies.sens.high.csv*: contains all variables sampled at the point of highest epidemic growth across different prevalances of COVID-like symptoms due to other etiologies (0.05, 0.1, 0.15, 0.2) when vaccine efficacy against susceptibility is higher. Sampled data comes from 100 epidemic realizations.
