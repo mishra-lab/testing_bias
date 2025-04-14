@@ -1,7 +1,7 @@
-testing_scenario,vaccination_status,average_day_of_first_test
-equal,vac,4.19
-equal,unvac,4.19
-mod_Unequal,vac,4.2
-mod_Unequal,unvac,4.55
-high_Unequal,vac,4.21
-high_Unequal,unvac,4.83
+testing_scenario,vaccination_status,average_day_of_first_test,sample_size
+equal,vac,4.19,50000
+equal,unvac,4.19,50000
+mod_Unequal,vac,4.2,50000
+mod_Unequal,unvac,4.55,50000
+high_Unequal,vac,4.21,50000
+high_Unequal,unvac,4.83,50000
