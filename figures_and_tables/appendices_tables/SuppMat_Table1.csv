@@ -1,0 +1,7 @@
+testing_scenario,vaccination_status,average_day_of_first_test
+equal,vac,4.19
+equal,unvac,4.19
+mod_Unequal,vac,4.2
+mod_Unequal,unvac,4.55
+high_Unequal,vac,4.21
+high_Unequal,unvac,4.83
