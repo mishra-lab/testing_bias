@@ -1,5 +1,5 @@
 ### Description: 
-All data found in these folders are simulated data produced using ABM_Main.R (located in the "Code" folder). All .csv files contain seed numbers to allow for replication of all analyses.
+All data found in these folders are simulated data produced using ABM_Main.R (located in the "Code" folder).
 
 ### Folder Overview:
 - *appendices*: includes simulated data for the supplementary analyses and figures (called in and used by AppendixAnalyses_and_Figures.R)
