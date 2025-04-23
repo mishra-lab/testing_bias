@@ -3,9 +3,13 @@
 This repository contains the simulated data and code necessary to run the analyses and produce the figures for the manuscript, "Impact of unequal testing on vaccine effectiveness estimates across two study designs: a simulation study".
 
 ## Getting Started
-The project includes eight R scripts, all of which are located in the "code" folder.
+The project includes eight R scripts, all of which are located in the "code" folder. It also includes two R Markdown files:
 
-The following three R scripts contain the code to run the agent-based model (ABM) and create the simulated data for the main analyses:
+1. **MainData_Documentation.Rmd**: describes the main variables used to create the manuscript's figures and analyses.
+
+2. **TestingBias_simulationDocumentation.Rmd** – provides a detailed overview of the agent-based model (ABM) used to generate the simulated data.
+
+The following three R scripts contain the code to run the ABM and create the simulated data for the main analyses:
 
 1. ***ABM_Main.R***: contains the main code to run the ABM and generate simulated datasets. This script calls on both ***ABM_mainFunctions.R*** and  ***Aggdf_mainFunctions.R***. 
 
@@ -13,7 +17,7 @@ The following three R scripts contain the code to run the agent-based model (ABM
 
 3. ***Aggdf_mainFunctions.R***: contains code to aggregate individual-level information to  population-level data measurements.
 
-The following three R scripts contain the code to run the agent-based model (ABM) and create the simulated data for the sensitivity analyses that accounts for time when estimating symptomatic vaccine effectiveness:
+The following three R scripts contain the code to run the ABM and create the simulated data for the sensitivity analyses that accounts for time when estimating symptomatic vaccine effectiveness:
 
 1. ***ABM_App_withTime.R***: contains the additional code to run the ABM and generate the simulated datasets for the appendix. This script calls on ***ABM_mainFunctions.R***, ***IndTestdf_appFunctions.R***, and  ***Aggdf_appFunctions_withTime.R***. 
 
@@ -27,7 +31,7 @@ The following two R scripts are used to conduct the analyses and generate figure
 
 5. ***AppendixAnalyses_and_Figures.R***: contains the code to conduct the supporting analyses found in the supplementary information and to generate supplementary figures.
 
-All simulated data necessary to recreate the analyses and the figures is located in the "data" folder; copies of all figures can be found in the "figures" folder.
+All simulated data necessary to recreate the analyses and the figures is located in the "data" folder; copies of all figures and tables can be found in the "figures_and_tables" folder.
 
 ### Dependencies
 
