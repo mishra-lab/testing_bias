@@ -36,7 +36,7 @@ All simulated data necessary to recreate the analyses and the figures is located
 ### Dependencies
 
 * Simulations and analyses were performed using R (R Core Team 2023) (version 4.3.1) with computations performed on the Niagara supercomputer at the SciNet HPC Consortium (Loken et al. 2010; Ponce et al. 2019).
-* R packages necessary to recreate the analyses and figures include igraph (Csardi and Nepusz 2006) (version 1.5.1), graph4lg (Savary et al. 2021) (version 1.8.0), data.table (Matt Dowle and Arun Srinivasan 2023) (version 1.14.8) and survival (Therneau et al. 2023)(version 3.5.5).
+* R packages necessary to recreate the analyses, figures and tables include data.table (Matt Dowle and Arun Srinivasan 2023) (version 1.14.8), dplyr (Wickham et al. 2023) (version 1.1.2), flextable (Gohel et al. 2024) (version 0.9.7), ggborderline (Scott 2022) (version 0.2.0), ggplot2 (Wickham et al. 2016) (version 3.5.1), ggpubr (Kassambara 2023) (version 0.6.0), graph4lg (Savary et al. 2021) (version 1.8.0), igraph (Csardi and Nepusz 2006) (version 1.5.1), officer (Gohel et al. 2025) (version 0.6.8), and survival (Therneau et al. 2023)(version 3.5.5).
 
 
 
