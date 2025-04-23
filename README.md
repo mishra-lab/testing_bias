@@ -19,7 +19,7 @@ The following three R scripts contain the code to run the ABM and create the sim
 
 The following three R scripts contain the code to run the ABM and create the simulated data for the sensitivity analyses that accounts for time when estimating symptomatic vaccine effectiveness:
 
-1. ***ABM_App_withTime.R***: contains the additional code to run the ABM and generate the simulated datasets for the appendix. This script calls on ***ABM_mainFunctions.R***, ***IndTestdf_appFunctions.R***, and  ***Aggdf_appFunctions_withTime.R***. 
+1. ***ABM_App_withTime.R***: contains the additional code to run the ABM and generate the simulated datasets that explicitly account for time. This script calls on ***ABM_mainFunctions.R***, ***IndTestdf_appFunctions.R***, and  ***Aggdf_appFunctions_withTime.R***. 
 
 2. ***IndTestdf_appFunctions.R***: contains code that tracks all simulated individuals who tested at each time step. 
 
