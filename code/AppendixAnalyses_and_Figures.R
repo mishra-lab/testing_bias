@@ -5,12 +5,9 @@
 ################################################
 
 #OVERALL SET-UP
-library(tidyverse)
 library(ggborderline)
 library(data.table)
 library(ggpubr)
-library(knitr)
-library(kableExtra)
 library(dplyr)
 library(flextable)
 library(officer)
