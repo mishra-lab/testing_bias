@@ -1,0 +1,263 @@
+---
+title: "Data Documentation"
+date: "2025-04-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document provides information on the datasets accompanying the manuscript, *"Impact of unequal testing on vaccine effectiveness estimates across two study designs: a simulation study"*.
+
+### Datasets
+
+#### Main Datasets:
+- *obj1_aggDF.ves0.55.csv* and *obj1_aggDF.ves0.1.csv* contain the simulated data required to address objective 1. These data are used to produce Figure 3.
+- *obj2_ve.susc.sens.csv* contains the simulated data required to address part 1 of objective 2. These data are used to produce Figure 4.
+- *obj2_ve.infect.sens_ve.susc.0.55* and *obj2_ve.infect.sens_ve.susc.0.1* contain the simulated data required to address part 2 of objective 2. These data are used to produce Figure 5.
+- *obj3_prob.trans.sens_ve.susc.0.55* and *obj3_prob.trans.sens_ve.susc.0.1* contain the simulated data required to address objective 3. These data are used to produce Figure 6.
+
+#### Supplementary Datasets:
+
+- *aggDF.ves0.55_app*: contains the simulated data for Supplementary Figures 1a, 4a, & 21.
+- *aggDF.ves0.1_app*: contains the simulated data for Supplementary Figures 1b, 4b, & 22.
+- *df.ve.susc0.55_withTimeAnalysis*: contains the simulated data for Supplementary Figures 2a, c, 6a & c.
+- *df.ve.susc0.1_withTimeAnalysis*:  contains the simulated data for Supplementary Figures 2b, d, 6b & d.
+- *df.ve_stats_withTime*: contains individual stats coefficients, p-values and standard errors from the Cox and logistic regression models. This dataset relates to the analyses for estimating VE when accounting for time for both higher and lower vaccine efficacy against susceptibility (0.1 and 0.55).
+- *df.ves0.1_testSens*: contains the simulated data for Supplementary Figures 3a, c, 7a, c, 8a & Effects of Testing Sensitivity Analyses.
+- *df.ves0.55_testSens*: contains the simulated data for Supplementary Figures 3b, d, 7b, d, 8b & Effects of Testing Sensitivity Analyses.
+- *df.ve.susc0.55_other.etiologies.sens.high*: contains the simulated data for Supplementary Figures 9a.
+- *df.ve.susc0.1_other.etiologies.sens.high*: contains the simulated data for Supplementary Figures 9b & Proportional Increase Calculations Across COVID-like Symptoms Analyses.
+
+The following datasets are found within the sens_analyses subfolder:
+
+- *df.ve.susc.sens*: contains the simulated data for Supplementary Figure 10.
+- *df.ve.susc.0.55_ve.infect.sens*:  contains the simulated data for Supplementary Figure 11.
+- *df.ve.susc.0.1_ve.infect.sens*: contains the simulated data for Supplementary Figure 12 & Moderating Effect Calculations.
+- *df.ve.susc.sens_highChange*: contains the simulated data for Supplementary Figures 13 & 14 & Moderating Effect Calculations. 
+- *df.ve.susc.0.1_ve.infect.sens_highChange*: contains the simulated data for Supplementary Figures 15 & 16 & Moderating Effect Calculations. 
+- *df.ve.susc.0.55_prob.trans.sens*: contains the simulated data for Supplementary Figure 17.
+- *df.ve.susc.0.1_prob.trans.sens*: contains the simulated data for Supplementary Figure 18 & Moderating Effect Calculations.
+- *df.ve.susc.0.1_prob.trans.sens_highChange*: contains the simulated data for Supplementary Figures 19 & 20 & Moderating Effect Calculations.
+
+
+#### Column names (Variable Names)
+
+Below are the names and descriptions of variables found in the above datasets. In the datasets, if the variable name ends with ".50." this indicates it is the median value; if it ends with "0.2.5" or "0.97.5", this indicates the variable represents the 2.5% or 97.5% percentile.
+
+##### General SARS-CoV-2 and Other Etiologies of Symptoms Variables
+
+-   **Covid_cumPropSymptInfect_highChange** \<- cumulative measure of the
+    true proportion of all individuals who are or have been infected with
+    symptomatic SARS-CoV-2 (includes symptomatic infectious and those recovered
+    from a symptomatic infection) at the greatest positive growth
+    point during an epidemic. 
+
+-   **Covid_cumPropSymptInfect_unvac**\<- cumulative measure of the true
+    proportion of *unvaccinated* individuals who are or have been infected
+    with symptomatic SARS-CoV-2 (includes symptomatic infectious and those recovered
+    from a symptomatic infection).
+
+-   **Covid_cumPropSymptInfect_vac**\<- cumulative measure of the true
+    proportion of *vaccinated* individuals who are or have been infected
+    with symptomatic SARS-CoV-2 (includes symptomatic infectious and those recovered
+    from a symptomatic infection).
+
+-   **NonCovid_cumPropSymptInfect_unvac** \<- cumulative measure of the true
+    proportion of **unvaccinated** individuals who are or have been
+    symptomatic due to other etiologies and who are not nor have ever been
+    infected with symptomatic SARS-CoV-2.
+
+-   **NonCovid_cumPropSymptInfect_vac** \<- cumulative measure of the true
+    proportion of **vaccinated** individuals who are or have been
+    symptomatic due to other etiologies and who are not nor have ever been
+    infected with symptomatic SARS-CoV-2.
+    
+-   **NonCovid_propInfect**\<- the proportion (i.e. prevalence) of the population that has
+    symptoms due to other etiologies at any given time point. This has the same definition as **NonCovid_propSympt** 
+
+##### Vaccine Effectiveness Variables
+
+
+-   **VE_symptOR** \<- measure of vaccine effectiveness against symptomatic
+    SARS-CoV-2 infection, calculated using the odds ratio (1 - odds ratio *[OR]*). Here the denominators only capture those who have had COVID-like symptoms due to other etiologies without
+    ever having a symptomatic SARS-CoV-2 infection.This is the target estimate.
+
+-   **VE_symptRR** \<- measure of vaccine effectiveness against symptomatic
+    SARS-CoV-2 infection, calculated using the relative risk (1 - relative risk *[RR]*). This is the target estimate.
+    
+-  **VE_symptOR_degUnderNeg_highChange_trueVeff**\<-measure of the extent to which observed vaccine effectiveness against symptomatic SARS-CoV-2 infection (calculated using the odds ratio) underestimates true symptomatic vaccine effectiveness. A negative value means an underestimate.     
+    
+-  **VE_symptRR_degUnderNeg_highChange_trueVeff**\<-measure of the extent to which observed vaccine effectiveness against symptomatic SARS-CoV-2 infection (calculated using the relative risk) underestimates true symptomatic vaccine effectiveness. A negative value means an underestimate. 
+    
+-  **VE_symptOR_degUnderNeg_testSens**\<-measure of the extent to which observed vaccine effectiveness against symptomatic SARS-CoV-2 infection (calculated using the odds ratio) underestimates true symptomatic vaccine effectiveness when also including the effects of test sensitivity.A negative value means an underestimate.
+    
+-  **VE_symptRR_degUnderNeg_testSens**\<-measure of the extent to which observed vaccine effectiveness against symptomatic SARS-CoV-2 infection (calculated using the relative risk) underestimates true symptomatic vaccine effectiveness when also including the effects of test sensitivity. A negative value means an underestimate.   
+
+
+-   **VE_symptOR_observed** \<- measure of observed vaccine effectiveness
+    against symptomatic SARS-CoV-2 infection, calculated based on the odds ratio (1 - oddsratio$_O$ *[OR$_O$]*) 
+    where *OR$_O$* is defined as 1 -(**Covid_cumSymptExpInfect_tested_vac** /
+    **NonCovid_cumSymptInfect_tested_vac**)/
+    (**Covid_cumSymptExpInfect_tested_unvac** /
+    **NonCovid_cumSymptInfect_tested_unvac**). 
+    
+-   **VE_symptRR_observed** \<- measure of observed vaccine effectiveness
+    against symptomatic SARS-CoV-2 infection, calculated based on the relative risk
+    (1 - relative risk$_O$ *[RR$_O$]*) where *RR$_O$* is defined as 1 -
+    (**Covid_cumSymptExpInfect_tested_vac** /*N.vac*)/
+    (**Covid_cumSymptExpInfect_tested_unvac** /*N.unvac*) where *N.vac*
+    and *N.unvac* are the total numbers of vaccinated and unvaccinated
+    individuals in the population, respectively. 
+    
+-   **VE_symptOR_timeDep**\<-Estimate of vaccine effectiveness against symptomatic SARS-CoV-2 infection based on a time-adjusted  logistic regression model using a test-negative design. Here vaccine effectiveness is defined as VE$_{logit}$ = (1 - odds ratio$_{logit}$ *[OR$_{logit}$]*) where *OR$_{logit}=$* $exp$(**VacStatus_coef_timeDep_VeOR**).
+
+-   **VE_symptRR_timeDep**\<-Estimate of vaccine effectiveness against symptomatic SARS-CoV-2 infection based on a Cox model using a cohort design. Here vaccine effectiveness is defined as VE$_{HR}$= (1 - hazard ratio *[HR]*) where *HR=* $exp$(**VacStatus_coef_timeDep_VeRR**).
+
+
+##### Testing-related Variables
+
+-   **Covid_cumSymptExpInfect_tested_unvac** \<- cumulative measure of the
+    number of *unvaccinated* individuals who have been tested when
+    infected with SARS-CoV-2 while being symptomatic. This measurement
+    includes individuals who are symptomatic infectious, those who recovered
+    from symptomatic SARS-CoV-2 as well as those who are exposed to SARS-CoV-2
+    or had asymptomatic SARS-CoV-2 when also symptomatic due to other
+    etiologies.
+
+-   **Covid_cumSymptExpInfect_tested_vac** \<- cumulative measure of the
+    number of *vaccinated* individuals who have been tested when infected
+    with SARS-CoV-2 while being symptomatic. This measurement includes
+    individuals who are symptomatic infectious, those who recovered from
+    symptomatic SARS-CoV-2 as well as those who are exposed to SARS-CoV-2 or had
+    asymptomatic SARS-CoV-2 when when also symptomatic due to other
+    etiologies.
+
+-   **CumProp_falseNeg_unvac**\<- Cumulative proportion of *unvaccinated*
+    individuals who have been recorded as having a negative SARS-CoV-2 test
+    when they have previously had a symptomatic SARS-CoV-2 infection.
+
+-   **CumProp_falseNeg_vac**\<- Cumulative proportion of *vaccinated*
+    individuals who have been recorded as having a negative SARS-CoV-2 test
+    when they have previously had a symptomatic SARS-CoV-2 infection.
+
+-   **FalseNeg_withTestSens_unvac**<-Cumulative number of *unvaccinated*
+    individuals who have been recorded as having a negative SARS-CoV-2 test due to imperfect test sensitivity. 
+    
+-   **FalseNeg_withTestSens_vac**<-Cumulative number of *vaccinated*
+    individuals who have been recorded as having a negative SARS-CoV-2 test due to imperfect test sensitivity. 
+    
+-   **NonCovid_cumSymptInfect_tested_unvac** \<- cumulative measure of the
+    number of *unvaccinated* individuals who tested when having COVID-like
+    symptoms due to other etiologies who are not currently infected by
+    SARS-CoV-2 nor have ever tested positive when symptomatic and infected
+    with SARS-CoV-2. This measure excludes individuals who previously tested
+    while having symptoms from other etiologies but who were also exposed to
+    SARS-CoV-2 or had asymptomatic SARS-CoV-2.
+
+-   **NonCovid_cumSymptInfect_tested_vac**\<- cumulative measure of the
+    number of *vaccinated* individuals who tested when having COVID-like
+    symptoms due to other etiologies who are not currently infected by
+    SARS-CoV-2 nor have ever tested positive when symptomatic and infected
+    with SARS-CoV-2. This measure excludes individuals who previously tested
+    while having symptoms from other etiologies but who were also exposed to
+    SARS-CoV-2 or had asymptomatic SARS-CoV-2. 
+    
+-   **NonCovid_cumSymptInfect_tested_withTestSens_unvac**\<- cumulative measure of the
+    number of *unvaccinated* individuals who tested when having COVID-like
+    symptoms due to other etiologies who are not currently infected by
+    SARS-CoV-2 nor have ever tested positive when symptomatic and infected
+    with SARS-CoV-2. This measure differs from **NonCovid_cumSymptInfect_tested_unvac** in that it also accounts for false negatives resulting from imperfect test sensitivity.
+
+-   **NonCovid_cumSymptInfect_tested_withTestSens_vac**\<- cumulative measure of the
+    number of *vaccinated* individuals who tested when having COVID-like
+    symptoms due to other etiologies who are not currently infected by
+    SARS-CoV-2 nor have ever tested positive when symptomatic and infected
+    with SARS-CoV-2. This measure differs from **NonCovid_cumSymptInfect_tested_vac** in that it also accounts for false negatives resulting from imperfect test sensitivity.
+    
+-   **Stats_sampleSizeCovid_unvac**\<- Defined in the same way as **Covid_cumSymptExpInfect_tested_unvac**.
+
+-   **Stats_sampleSizeCovid_vac**\<- Defined in the same way as **Covid_cumSymptExpInfect_tested_vac**.
+
+-   **Stats_sampleSizeNonCovid_unvac**\<- Defined in the same way as **NonCovid_cumSymptInfect_tested_unvac**.
+
+-   **Stats_sampleSizeNonCovid_vac**\<- Defined in the same way as **NonCovid_cumSymptInfect_tested_vac**.
+
+##### Additional Statistics Variables(When Estimating Symptomatic VE When Accounting for Time)
+
+-   **Intercept_coef_timeDep_VeOR**\<- Coefficient for the Intercept from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **Intercept_pValue_timeDep_VeOR**\<- P-value for the Intercept from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **Intercept_se_timeDep_VeOR**\<- Standard Error for the Intercept from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **TimeStep_coef_timeDep_VeOR**\<-Coefficient for time since the start of a study (i.e. calendar time) from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **TimeStep_pValue_timeDep_VeOR**\<-P-value for the time since the start of a study (i.e. calendar time) from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **TimeStep_se_timeDep_VeOR**\<-Standard error for time since the start of a study (i.e. calendar time) from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **VacStatus_coef_timeDep_VeOR**\<-Coefficient for vaccination status from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **VacStatus_pValue_timeDep_VeOR**\<-P-value for vaccination status from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **VacStatus_se_timeDep_VeOR**\<-Standard error for vaccination status from a logistic regression model that adjusts for time, used to estimate symptomatic vaccine effectiveness using the test-negative design.
+
+-   **VacStatus_coef_timeDep_VeRR**\<-Coefficient for vaccination status from a Cox model for estimating symptomatic vaccine effectiveness using the cohort design.
+
+-   **VacStatus_pValue_timeDep_VeRR**\<-P-value for vaccination status from a Cox model for estimating symptomatic vaccine effectiveness using the cohort design.
+
+-   **VacStatus_se_timeDep_VeRR**\<-Standard error for vaccination status from a Cox model for estimating symptomatic vaccine effectiveness using the cohort design.
+
+
+##### Indicator and Other Variables
+
+-   **Avg_numContacts**\<- the average number of contacts each individual has
+    in the network. Calculated by taking the average degree of the network
+    (*contact_matrix*).
+    
+-   **Covid_probTrans**\<- the probability of SARS-CoV-2 transmission given
+    contact.
+
+-   **Epi_simNum**\<- the epidemic realization number [i.e. simulation
+    number]. The number ranges from 1-100.
+
+-   **Label\_ epiPhase** \<- a string that has two possible labels,
+    "Highest Growth", and "Peak" indicating the phase of the epidemic that estimates are taken.
+    
+-   **Label\_ testingDiff** \<- a string that has three possible labels,
+    "equal", "modUnequal" and "highUnequal" indicating the difference in
+    testing levels between vaccinated and unvaccinated individuals. The
+    string "equal" means there are no testing difference between vaccinated
+    and unvaccinated, "modUnequal" means vaccinated have 1.76 times higher
+    testing than unvaccinated and "highUnequal" means vaccinated have 2.36
+    times higher testing than unvaccinated.
+    
+-   **NonCovid_propSympt**\<- the proportion (i.e. prevalance) of the population that has
+    symptoms due to other etiologies at any given timepoint.This has the same definition as **NonCovid_propInfect** 
+
+-   **Seed_num**\<- the seed number that recreates the simulated epidemic
+    data.
+    
+-   **t** \<- the timestep that a study has been conducted.
+
+-   **t_highChange**\<- the timestep during the epidemic where there is the
+    greatest positive change in SARS-CoV-2 infections.
+
+-   **totalNum_sims**\<- the total number of epidemic realizations for a given scenario. Typically this is 100.
+
+-   **Test_sens** \<- the level of test sensitivity.
+
+-   **VE_infect**\<- the true vaccine efficacy against infectiousness.
+
+-   **VE_susc** \<- the true vaccine efficacy against susceptibility.
+
+
+
+
+
+
+
+
+

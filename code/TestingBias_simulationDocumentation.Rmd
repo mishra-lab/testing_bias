@@ -1,0 +1,1304 @@
+---
+title: "Testing Bias Simulation Documentation"
+date: "2025-04-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project Overview
+
+### Main Objectives
+
+1.  Understand how patterns of testing by vaccination status affect
+    estimates of vaccine effectiveness against symptomatic infection
+    across two study designs:
+
+    a.  retrospective cohort design
+    b.  retrospective test negative design
+
+Explore how estimates differ across study designs given the same
+sampling period and how do results differ across sampling time within
+each study design,
+
+If we find that testing differences across vaccination status can lead
+to biased measurements:
+
+2.  How is the magnitude of this bias shaped by differences levels and
+    the aspects of immune escape (found across emerging variants)
+
+    a.  Vaccine efficacy against susceptibility
+    b.  Vaccine efficacy against infectiousness
+    
+3.  How is the magnitude of the bias shaped by the transmissibility of the virus
+
+### Summary of Methodology
+
+To quantify the magnitude of potential bias due to testing differences
+by vaccination status, we developed an agent-based model (ABM) to derive
+symptomatic VE measurements under different testing scenarios. The ABM
+includes vaccination and testing and simulates SARS-Cov-2 transmission
+dynamics using a contact network.
+
+At each iteration, the model updates individuals' states, keeping track
+of both fixed and changing attributes over time. Each individual
+represented in the model was assigned a list of attributes including
+SARS-CoV-2 status (Susceptible, Exposed, Infectious, Recovered), symptom status (symptomatic vs asymptomatic), level of
+healthcare engagement (low vs high), vaccination status (vaccinated vs
+unvaccinated), testing for SARS-CoV-2 (tested vs not tested) and
+SARS-CoV-2 diagnosis given testing (tested positive vs negative). We
+also tracked the presence of Covid-like symptoms due to etiologies other
+than SARS-CoV-2 infection.
+
+## Technical Overview
+
+### R Scripts
+
+The project involves eight R scripts to run the ABM model, generate the datasets, conduct analyses and produce figures.
+
+The following three R scripts contain the ABM model code to run the ABM to create the main datasets used in the main analyses:
+
+1. ***ABM_Main.R***: contains the main code to run the ABM and generate datasets. This script calls on both ***ABM_mainFunctions.R*** and  ***Aggdf_mainFunctions.R***. 
+
+2. ***ABM_mainFunctions.R***: contains code for the main ABM functions to generate the transmission network, assign healthcare engagement status, conduct transmission dynamics for SARS-CoV-2, conduct symptomatic SARS-CoV-2 testing, etc. 
+
+3. ***Aggdf_mainFunctions.R***: contains code to aggregate individual-level information to  population-level measurements.   
+
+The following three R scripts contain the code to run the agent-based model (ABM) and create the simulated data for the sensitivity analyses that accounts for time when estimating symptomatic VE:
+
+1. ***ABM_App_withTime.R***: contains the additional code to run the ABM and generate the simulated datasets for the appendix. This script calls on ***ABM_mainFunctions.R***, ***IndTestdf_appFunctions.R***, and  ***Aggdf_appFunctions_withTime.R***. 
+
+2. ***IndTestdf_appFunctions.R***: contains code that tracks all simulated individuals who tested at each time step. 
+
+3. ***Aggdf_appFunctions_withTime.R***: contains code to sample individuals, run statistical models that account for time, and aggregate individual-level information to population-level data measurements. 
+
+
+The following two R scripts are used to conduct the analyses and generate figures:
+
+4. ***MainAnalyses_and_Figures.R***: contains the code to conduct the main analyses pertaining to Objectives 1-3 and to generate Figures 3-6.
+
+5. ***AppendixAnalyses_and_Figures.R***: contains the code to conduct the supporting analyses found in the appendix and to generate Appendix Figures.
+
+### Datasets
+
+There are two main types of datasets produced by ***ABM_Main.R***:
+
+1. *inds_df*: contains individual-level information for a timestep. This dataset is used to run the ABM and to create the information found in *agg_df*. This dataset is not saved.
+
+2. *agg_df* or *df.ve.susc* (with the exception of those ending with "withTimeAnalysis"): contain population-level information across timesteps and across three testing scenarios (originally represented as three separate data
+frames: *aggDF_equal*, *aggDF_modUnequal*, and *aggDF_highUnequal* that were combined). These datasets are saved and are used to generate most results and figures (see below). 
+
+There is an additional type of appendix dataset produced by ***ABM_App_withTime.R***:
+
+1. *df.ve.susc0.55_withTimeAnalysis* or *df.ve.susc0.1_withTimeAnalysis*: contain population-level information including analyses from statistical models that account for time across timesteps and across three testing scenarios (originally represented as three separate dataframes: *aggDF_equal*, *aggDF_modUnequal*, and *aggDF_highUnequal* that were combined)
+
+
+
+## Main ABM Details 
+
+### Main Functions
+
+These ABM functions are found in ***Aggdf_mainFunctions.R*** and are used by ***ABM_Main.R*** to run the model.
+
+<br>
+
+##### **Function Name:** <span style="color: purple"> _covid_Create_Matrix{}_</span>
+
+ **Short Description:** Generates a contact matrix that sets who is connected with whom (for SARS-CoV-2 transmission) in the population.
+
+ **Detailed Description:** Generates a contact matrix based on an
+ Erdos-Rényi graph with *N* number of nodes and an average number of
+ contacts based on *no.contacts*. After the network is created, the
+ smaller disconnected components of the network are connected to the
+ main component of the network by iterating through the list of the
+ smaller network components (*list.remaining.cluster.ids*) and
+randomly sampling one node in each smaller component
+ (*unconnected.nodeId.sample.name*) to be connected to one randomly
+ sampled node in the main network (*main.nodeId.sample.name*). A new
+edgelist (*new_edge_list*) is created based on these new
+connections, which is then added the main network (*contact_matrix*).
+The number of contacts (i.e. degree) for each node is assigned as an
+attribute of *contact_matrix*; other node attributes
+are also added including covid status (Covid_status), vaccination
+status (Vac_status) , and individual id (name) are then assigned based on information from *df$[t]$*.
+
+**Inputs:** *df$[t]$* (dataframe at time *t*), *no.contacts* (numeric
+scalar), *N* (numeric scalar)
+
+**Outputs:** *contact_matrix* (matrix of scalars)
+
+<br>
+
+##### **Function Name:** <span style="color: purple"> *assign_HCE_Status{}*</span>
+
+ **Short Description:** Assigns level of healthcare engagement to
+ individuals ("low" indicates low healthcare engagement; and
+"high" indicates high healthcare engagement) by vaccination status
+ and healthcare engagement scenario.
+
+ **Detailed Description:** Assigns level of health-seeking to each
+ individual using random draws and scenario-based proportions of high
+ and low health-seeking by vaccination status
+ (_prop.HCE.testing.unvac_ for unvaccinated; _prop.HCE.testing.vac_
+ for vaccinated). The indicator variable _level.diff_ indicates the
+ healthcare engagement scenario: "1" is where vaccinated and
+ unvaccinated have the same level of high health-seeking; "2" is
+ where vaccinated have 2.5x higher levels of high healthcare
+ engagement; and "3" is where vaccinated have 5x higher levels of
+ high healthcare engagement. Individual's healthcare engagement status
+ for each healthcare engagement scenario (either "low" for low healthcare
+ engagement or "high" for high healthcare engagement) is saved in
+ the corresponding healthcare engagement scenario variable in _df$[t]$:
+ ***HCE_status_equal***, ***HCE_status_modUnequal***; and
+ ***HCE_status_highUnequal***. As the vaccinated population maintains the
+ same levels of high and low health-seeking across scenarios (i.e. only
+ the unvaccinated population's healthcare engagement levels vary across
+ scenarios), vaccinated individuals' statuses across
+ ***HCE_status_equal***, ***HCE_status_modUnequal***; and
+ ***HCE_status_highUnequal*** are all the same (set as
+ *level.diff* = "1").
+
+ **Inputs:** _df$[t]$_ (dataframe at time $t$), _level.diff_
+ (character vector), _prop.HCE.testing.unvac_ (numeric vector),
+ _prop.HCE.testing.vac_ (numeric vector)
+
+ **Modifies:** ***HCE_status\_\**** where ***\**** = ***equal, modUnequal,
+ highUnequal***
+
+<br>
+
+##### **Function Name:** <span style="color: purple"> *covid_Infection_Network{}* </span>
+
+ **Assumption:** Individuals can be infected with Covid if they are
+ already have symptoms from another source (i.e. when
+ **Noncovid_status** == "I"). We assume that symptomatic and
+ asymptomatic individuals with SARS-CoV-2 can equally infect
+ susceptible individuals. We also assume that there is a poisson
+ distribution around latency time (**Covid_exposed_timeLength** and
+ **Covid_timeLeft_exposed**). Those protected by the vaccine (i.e.
+ *Covid_status* == "S_protected") cannot be infected with SARS-CoV-2.
+
+ **Short Description:** Infects individuals with SARS-CoV-2, sets their
+ SARS-CoV-2 status to exposed, and assigns the amount of time that will
+ be spent in the exposed state.
+
+ **Detailed Description:** Determines exposure to SARS-CoV-2 and sets
+ the length of the latency period for each exposed individual. First,
+ to determine potential exposure to an infected individual, two data
+ frames are created: the first contains individual's total number of
+ contacts who are infected and vaccinated (*df.infected.by.vac*) and
+ the other, the total number of contacts who are infected and
+ unvaccinated (*df.infected.by.vac*). These counts are assigned as
+ attributes in the main network, contact_matrix
+ (contact_by_inf.vac and contact_by_inf.unvac).
+
+ Next, the function identifies those in the main network who are
+ susceptible. Whether these susceptible individuals become exposed to
+ SARS-CoV-2 is determined by two sets of draws from a binomial
+ distribution -- one based on their vaccinated infected contacts and
+ the other on their unvaccinated infected contacts. For trials related
+ to their vaccinated contacts, the number of trials for each
+ susceptible individual is their number of infected vaccinated
+ contacts(*num. vac.inf.contacts*) and the probability of success is
+the probability of transmission for SARS-CoV-2 given vaccination
+ (*covid.prob.trans* with *ve.infect*); for trials related to
+ unvaccinated contacts, the number of trials is their number of
+ infected unvaccinated contacts (*num.unvac.inf.contacts*) and the
+ probability of success is the probability of transmission for
+ SARS-CoV-2 alone (*covid.prob.trans)*. If the total number of
+ successes across both trials \>=1, the individual becomes exposed. For
+ those who become exposed, their covid status attribute in the main
+ network (*contact_matrix*) is updated (Covid_status = "E") and their
+ Covid status, SARS-CoV-2 new infection and ever infected with
+ SARS-CoV-2 indicator variables in the main data frame (df$[t]$) are
+ also updated (**Covid_status** = "E" and **Covid_newlyExposed** = "1";
+ and **Covid_everInfected** = "1").
+
+ The function also assigns the time to be spent in the exposed state
+ (**Covid_exposed_timeLength**), set using a draw from a Poisson
+ distribution with an average incubation time of
+ *avg.covid.inc.period*. The time left in the exposed state
+ (**Covid_timeLeft_exposed**) is also assigned (and is the same as
+ **Covid_exposed_timeLength**).
+
+ **Input(s):** df$[t]$ (dataframe at time *t*), *contact_matrix* (igraph
+ object), *ve.infect* (numeric scalar), *covid.prob.trans* (numeric
+ scalar), *avg.covid.inc.period* (numeric scalar)
+
+ **Modifies: Covid_status**, **Covid_newlyExposed**,
+ **Covid_everInfected**, **Covid_exposed_timeLength**, and
+ **Covid_timeLeft_exposed**
+
+<br>
+
+##### **Function:** <span style="color: purple"> *covid_ExpToInf{}* </span>
+
+ **Assumption:** We assume there is a Poisson distribution around
+ recovery time (*avg.covid.recovery.time**). Recovery time is not
+ dependent on vaccination status nor symptom status. We will start by
+ assuming vaccination does not influence the probability of becoming
+ symptomatic (*covid.prob.sympt.vac* = *covid.prob.sympt.unvac*) but
+ have enabled these probabilities to covary with vaccination status if
+ we select to do so.
+
+ **Short Description:** Moves individuals to the SARS-CoV-2 infectious
+ class, assigns symptom status, and assigns amount of time to be spent
+ as infectious.
+
+ **Detailed Description:** Moves individuals from the exposed class
+ ("E") to the infectious class ("I") for the covid status variable
+ (**Covid_status**). Assigns whether individuals are asymptomatic or
+ symptomatic (**Covid_symptomStatus**) using a Bernoulii trial using
+ probabilities (*covid.prob.sympt.vac* and
+ *covid.prob.sympt.unvac*) based on vaccination status
+ (**Vac_status**). Those who are infected with symptomatic Covid are
+ recorded (**Covid_everSymptInfected**). The total time spent in the
+ infectious state is recorded (**Covid_infectious_timeLength**) along
+ with the time left until recovery (**Covid_timeLeft_infectious** =
+ **Covid_infectious_timeLength**). The recovery time is drawn from a
+ Poisson distribution using a defined average recovery time
+ (*avg.covid.recovery.time*).
+
+ **Inputs:** df$[t]$ (dataframe at time *t*), *covid.prob.sympt.vac*
+ (numeric scalar), *covid.prob.sympt.unvac* (numeric scalar),
+ *avg.covid.recovery.time* (numeric scalar)
+
+ **Modifies: Covid_status**, **Covid_symptomStatus**,
+ **Covid_everSymptInfected**, **Covid_infectious_timeLength**, and
+ **Covid_timeLeft_infectious**
+
+<br>
+
+##### **Function:** <span style="color: purple"> *recovery{}*</span>
+
+ **Short Description:** Moves individuals infected with SARS-CoV-2 to
+ recovered and those with symptoms due to other etiologies to
+ uninfected.
+
+ **Detailed Description:** This function changes **Covid_status** from "I" to "R" (infectious to recovered) in the *contact_matrix* and in *df$[t]$* for those who have 0 time left until recovery from SARS-CoV-2 (determined by **Covid_timeLeft_infectious**). It also changes **Noncovid_status** from "I" to "N" (infectious/symptomatic to not infected) in *df$[t]$* for those who have 0 time left until recovery from other etiologies (determined by **Noncovid_timeLeft_infected**). For those recovering from SARS-CoV-2, symptom status(**Covid_symptomStatus**) is also reset to 0 (non-symptomatic).
+
+**Inputs:** *df$[t]$* (dataframe at time *t*)
+
+**Modifies: Covid_status**, **Covid_symptomStatus**,**Noncovid_status**, *contact_matrix*
+
+<br>
+
+##### **Function:** <span style="color: purple"> *nonCovid_Infection{}*</span>
+
+ **Assumptions:** We assume individuals who are infected with
+ SARS-Cov-2 can also be symptomatic due to other etiologies(and vice
+ versa). We assume there is always x prevalence in the population (set
+ by *noncovid.prop.infect* outside the function).All individuals can
+ have symptoms due to other etiologies at different periods across
+ time. All individuals with symptoms due to other etiologies are
+ symptomatic. Recovery time (*avg.noncovid.recovery.time*) is assumed
+ to follow a Poisson distribution.
+
+ **Short Description:** Recruits individuals to be symptomatic due to
+ other etiologies, sets their status to be infected and assigns the
+ amount of time until individual becomes non-symptomatic again.
+
+ **Detailed Description:** Sets individuals to be symptomatic based on
+ how many individuals have recovered from symptoms due to other
+ etiologies and therefore need to be replaced (set by
+ *noncovid.replace*)to maintain the prevalence in the population.
+ Individuals who are to become symptomatic due to other etiologies are
+ selected through random sampling (using *noncovid.replace* to set
+ the number to be sampled); The possible replacement candidates who are
+ sampled from are those not currently symptomatic due to other etiologies.
+
+ If individuals are selected to be symptomatic due to other etiologies,
+ their non-covid status their new symptomatic infection due to other
+ etiologies and their ever symptomatic due to other etiologies
+ indicator variables are all updated (**Noncovid_status** = "I";
+ **NonCovid_newlyInfected** = "1"; and **NonCovid_everSymptInfected** = "1").
+
+ The function also assigns the length of recovery time
+ (**Noncovid_infected_timeLength**), set using a draw from a Poisson
+ distribution with an average number of recovery days of
+ *avg.noncovid.recovery.time*. The time left being symptomatic due to
+ other etiologies (**Noncovid_timeLeft_infected**) is also assigned
+ (and is the same as **Noncovid_infected_timeLength**).
+
+ **Input:** *df$[t]$* (dataframe at time *t*), *noncovid.replace*
+ (numeric scalar), *avg.noncovid.recovery.time* (numeric scalar)
+
+ **Modifies: Noncovid_status**, **NonCovid_newlyInfected**,
+ **NonCovid_everSymptInfected**, **Noncovid_infected_timeLength**, and
+ **Noncovid_timeLeft_infected**
+
+<br>
+
+##### **Function:** <span style="color: purple">*covid_Testing{}*</span>
+
+ **Assumptions:** Individuals who are symptomatic are eligible to be
+ tested. Everyone can only test once per timestep, but each individual
+ can test multiple times across time. We assume that the probability of
+ getting tested while symptomatic due to Covid-19 or due to other
+ etiologies (*covid.prob.test.sympt.vac* = *non.covid.prob.test.sympt.
+ vac* and *covid.prob.test.sympt.unvac* =
+ *non.covid.prob.test.sympt.unvac*) and that testing can vary by
+ vaccination status (**vac_Status**). Finally, we define a false
+ positive result (**Covid_falseSymptPos**) as individuals who test
+ positive for Covid-19 when they are exposed or infected with
+ asymptomatic covid while having symptoms due to other etiologies (and
+ no symptoms due to SARS-CoV-2). The actual test is assumed to have
+ perfect sensitivity and specificity.
+
+ **Short Description:** Sets which symptomatic individuals infected
+ with SARS-CoV-2 tested for SARS-CoV-2 (and sets them testing
+ positive); also tracks whether individuals receive a false positive
+ (when asymptomatic with SARS-CoV-2 but symptomatic due to other
+ etiologies).
+
+ **Detailed Description:** This function determines who gets tested for
+ individuals are symptomatic and infected with Covid (**Covid_status**
+ ="E" or **Covid_status** ="I") regardless of whether they are symptomatic due to other etiologies or not (**Noncovid_status** ="N" or **Noncovid_status**
+ ="I"). This function keeps track of how many times individuals
+ tested when exposed or infectious with Covid-19
+ (**Covid_testedSymptExp\_\*** or **Covid_testedSymptInf\_\***), and
+ the time step they were tested (**Covid_newly_testedSymptExp\_\*** or
+ **Covid_newly_testedSymptInf\_\***) based on their levels of testing
+ (*levels.tested -* 1 = equal testing, 2= moderately unequal testing,
+ and 3 = highly unequal testing).
+
+ Individual testing for those who have symptomatic Covid
+ (**Covid_symptomStatus** = "symptomatic") is determined by a
+ Bernoulli draw where the probability of being tested set by
+ *covid.prob.test.sympt.unvac* (for unvaccinated) and
+*covid.prob.test.sympt.vac* (for vaccinated); individual testing who
+ are exposed to Covid-19 (**Covid_status** ="E") or have
+ asymptomatic Covid-19 (**Covid_status** ="I" &
+ **Covid_symptomStatus** = "asymptomatic") and also have Covid-like
+ symptoms (**Noncovid_status** ="**I**") is determined by a Bernoulli
+ draw where the probability of being tested is set by
+ *non.covid.prob.test.sympt.unvac* (for unvaccinated) and
+*non.covid.prob.test.sympt.vac* (for vaccinated). Note that
+ *covid.prob.test.sympt.unvac*, *covid.prob.test.sympt.vac*,
+ *non.covid.prob.test.sympt.unvac* and *non.covid.prob.test.sympt.vac* are vectors of probabilities. For unvaccinated individuals, their vectors (*covid.prob.test.sympt.vac* and *non.covid.prob.test.sympt.vac*) contain probabilities
+that correspond to increasing differences in the levels of testing
+compared to vaccinated -- equal, moderately unequal and highly
+ unequal- indicated by *levels.tested* (1 = equal, 2= moderately
+unequal, and 3 = highly unequal); for vaccinated individuals, their
+vectors (*covid.prob.test.sympt. unvac* and *non.covid.prob.test.sympt. unvac*) contain identical probabilities despite the testing labels indicating equal, modUnequal and highUnequal.
+
+ False positive tests are also tracked (**Covid_falseSymptPos**), which
+ arise either when individuals are exposed with Covid-19
+ (**Covid_status** ="E") or asymptomatic with Covid-19
+ (**Covid_status** ="I" & **Covid_symptomStatus** =
+ "asymptomatic") while also having symptoms due to other etiologies
+ (**Noncovid_status** ="I"). A false positive can be reset if the
+ individual retests with symptomatic Covid-19 (only occurs when the
+ false positive arose during Covid-19 exposure.
+
+ **Inputs:** *df$[t]$* (dataframe at time *t*), *levels.tested*
+ (character vector), *covid.prob.test.sympt.unvac* (numeric vector),
+ *covid.prob.test.sympt.vac* (numeric vector) ,
+ *non.covid.prob.test.sympt.unvac* (numeric vector),
+ *non.covid.prob.test.sympt.vac* (numeric vector).
+
+ **Modifies: Covid_newly_testedSymptExp\_\***,
+ **Covid_testedSymptExp\_\***, **Covid_newly_testedSymptInf\_\***,
+ **Covid_testedSymptInf\_\*, Covid_falseSymptPos\_\*** where **\*** =
+ **equal, modUnequal, highUnequal**
+
+<br>
+
+##### **Function:** <span style="color: purple">*nonCovid_Testing{}* </span>
+
+ **Assumptions:** All individuals who have symptoms due to other
+etiologies (**Noncovid_Status** = "I") are assumed to be
+symptomatic and therefore all have the potential to test. Each
+individual can only test once per timestep but individuals can be
+tested more than once across time. In our analysis we assume that the
+probability of getting tested while symptomatic is the same when
+having symptoms due to Covid-19 or other etiologies
+(*covid.prob.test.sympt.vac* = *non.covid.prob.test.sympt.vac* and
+*covid.prob.test.sympt.unvac* = *non.covid.prob.test.sympt.unvac*) and
+that testing can vary by vaccination status (**vac_Status**). The
+actual test is assumed to have perfect sensitivity and specificity.
+
+ **Short Description:** Sets which symptomatic individuals due to other
+etiologies tested for SARS-CoV-2 (and sets them to testing negative);
+ also tracks whether individuals receive a false negative (when
+ individuals have previously had symptomatic SARS-CoV-2 but were not
+ tested).
+
+ **Detailed Description:** This function determines who gets tested
+ when individuals have symptoms due to other etiologies
+(**Noncovid_Status** = "I") but who are not co-infected (i.e. also
+are exposed or infectious with covid). It keeps track of how many
+ times individuals get tested when they have symptoms due to other
+ etiologies (**NonCovid_testedSymptInf\_\***) and the time step they
+ were tested (**NonCovid_newly_testedSymptInf\_\***)**.** by testing
+ level (*levels.tested*).
+
+ Individual testing for those only having symptoms due to other
+ etiologies is determined by a Bernoulli draw where the probability of
+ being tested (*non.covid.prob.test.sympt.vac*, *non.covid.prob.test.sympt.unvac*) varies by vaccination status (**vac_Status**). Note that *non.covid.prob.test.sympt.unvac* and *non.covid.prob.test.sympt.vac* are vectors of probabilities. For vaccinated individuals, their vector (*non.covid.prob.test.sympt.vac*) contains probabilities that correspond to increasing levels of testing -- equal, moderately unequal and highly unequal - indicated by *levels.tested* (1 = equal, 2= moderately unequal, and 3 = highly unequal); for
+ unvaccinated individuals, their vector (*non.covid.prob.test.sympt.unvac*) contains identical probabilities despite the testing labels indicating equal, moderately unequal and highly unequal.
+
+ False negative tests are also tracked (**Covid_falseNeg**), which
+ arise either when individuals have been previously infected with
+ symptomatic Covid-19 (**Covid_status** ="I" &
+ **Covid_symptomStatus** = "symptomatic") and have not previously
+ tested positive for symptomatic Covid (**Covid_testedSymptInf_unvac**
+ or **Covid_testedSymptInf_vac**). A false negative cannot be changed
+ over time as the symptomatic infection was not accounted for during
+ the window of opportunity to capture it.
+
+ **Input(s):** df$[t]$ (dataframe at time *t*),
+*non.covid.prob.test.sympt.unvac** (probability vector), 
+*non.covid.prob.test.sympt.vac* (probability vector),
+*levels.tested* (character vector)
+
+ **Modifies:** **NonCovid_testedSymptInf\_\***,
+ **NonCovid_newly_testedSymptInf\_\*** where **\*** = **equal,
+ modUnequal, highUnequal**
+
+<br>
+
+### Time Steps of ABM (i.e. order of implementation)
+
+#### Initial Steps (*t* =0) 
+
+1.  Assign initial parameter values and values for the population size
+    and the number of vaccinated and unvaccinated individuals.
+
+2.  Assign high and low health-engagement for individuals across the
+    three testing scenarios (**function:** *assign_HCE_Status{}*)
+
+3.  Assign initial **Covid_status**:
+
+    a.  Everyone is set as "S" or "S_protected" (if vaccinated
+        and protected) except for x number of individuals who are set as
+        "E" (they will become infectious before start of the time
+        loop)
+
+4.  Create the contact matrix used for SARS-CoV-2 transmission
+    (**function:** *covid_Create_Matrix{}*)
+
+5.  Set those exposed to SARS-CoV-2 to be infectious (**function:**
+    *covid_ExpToInf{}*)
+
+6.  Assign initial **Noncovid_status:**
+
+    a.  X number of individuals are selected to be symptomatic due to
+        other etiologies based on the set prevalence of these Covid-like
+        symptoms in the population (**function:**
+        *nonCovid_Infection{}*)
+
+7.  Engage in SARS-CoV-2 testing for those with SARS-CoV-2 and for those
+    symptomatic due to other etiologies (**functions:**
+    *covid_Testing{}* and *nonCovid_Testing{}*)
+
+    a.  Both testing functions are run three times to capture testing
+        across the three testing scenarios (equal testing, moderately unequal testing           and highly unequal testing)
+
+#### Time Loop (*t* \>0)
+
+1.  Reset all variables to "0" that record if infection or testing has
+    occurred at the current timestep (e.g. **Covid_newlyExposed)**
+
+2.  Subtract 1 day from all variables tracking the time left in a
+    specific state (e.g. **Covid_timeLeft_exposed**)
+
+3.  Record the number of individuals that are going to recover from
+    having Covid-like symptoms due to other etiologies (to know how many
+    new individuals are needed to replace them)
+
+4.  Move individuals who are exposed but have no time left being exposed
+    to infectious (**function:** *covid_ExpToInf{}*)
+
+5.  Move individuals who are infectious but have no time left being
+    infectious to recovered (**function:** *recovery{}*)
+
+6.  Infect individuals with SARS-CoV-2 (**function:**
+    *covid_Infection_Network{}*)
+
+7.  Set individuals to be symptomatic due to other etiologies
+    (**function:** *non_Covid_Infection{}*)
+
+8.  Engage in SARS-CoV-2 testing for those with SARS-CoV-2 and for those
+    symptomatic due to other etiologies (**functions:**
+    *covid_Testing{}* and *nonCovid_Testing{}*)
+
+9.  Record current timestep
+
+10. Update population-level variables in aggregate data frames (
+    *aggDF\_\** where \*= *equal*, *modUnequal*, *highUnequal*)
+
+11. Increase timestep by 1
+
+## Appendix ABM, Aggdf and IndTestdf With Time Details 
+
+### Description
+
+***ABM_App_withTime.R***, ***Aggdf_appFunctions_withTime.R*** and ***IndTestdf_appFunctions.R*** are used to conduct additional sensitivity analyses that account for time when estimating symptomatic VE. ***ABM_App_withTime.R*** is almost identical to ***ABM_Main.R*** but calls on the additional R files to generate individual-level data and run statistical analyses that account for time.
+
+### Main Functions
+
+These functions are all found in ***Aggdf_appFunctions_withTime.R***. Below is a short description for each function.
+
+
+##### **Function Name:** <span style="color: purple"> _aggdf_Create{}_</span>
+
+**Short Description:** Calculates the true and sampled numbers and proportions of those infected with symptomatic SARS-CoV-2 and who are symptomatic with alternate etiologies. Also calculates symptomatic vaccine effectiveness estimates derivied using the retrospective cohort design and the retrospective test-negative design.
+
+##### **Function Name:** <span style="color: purple"> _aggdf_Stats{}_</span>
+
+**Short Description:** Calls on a helper function to aggregate information on symptomatic individuals who have tested by vaccination status (<span style="color: purple"> _agg.df_addSampleSize_function{}_</span>), runs the statistical analyses that accounts for time (Cox model for the retrospective cohort; Time-adjusted logistic model for the test-negative design) on the appropriately sampled data (using <span style="color: purple"> _testSampling_function{}_</span>) and calls on a helper function (<span style="color: purple"> _agg.df_addTimeDepCoefs_function{}_</span>) to add statistical model information to an existing dataframe.
+
+##### **Function Name:** <span style="color: purple"> _agg.df_addSampleSize_function{}_</span>
+
+**Short Description:** Helper function that calculates the numbers of tested symptomatic individuals who are infected with SARS-CoV-2 or are symptomatic due to alternate etiologies by vaccination status.
+
+##### **Function Name:** <span style="color: purple"> _agg.df_addTimeDepCoefs_function{}_</span>
+
+**Short Description:** Helper function that pulls the coefficients, standard errors and p-values from statistical models and adds them to an existing dataframe.
+
+##### **Function Name:** <span style="color: purple"> _testSampling_function{}_</span>
+
+**Short Description:** Helper function that creates a sampled dataset for a study conducted at a specific timepoint. The sampling procedure includes selecting either the first positive SARS-CoV-2 test for individuals who have at least one positive SARS-CoV-2 test or a random negative test for individuals who only have negative tests.
+
+
+## Dataset Details
+
+### _inds_df Dataset_ 
+
+#### Rownames
+
+Rownames contain the identifier for each individual in the format
+"indx" with x representing the individual's unique id number.
+
+#### Columnnames (Variable Names) 
+
+-   **Vac_status**\<- vaccination status against infection from
+    SARS-CoV-2. Options include "vac" (vaccinated) and "unvac"
+    (unvaccinated).
+
+-   **t\<-** the current timestep.
+
+##### SARS-CoV-2 Infection Variables
+
+-   **Covid_status** \<- what is the status of COVID-19 infection. The
+    options include S (susceptible), S_protected (susceptible but
+    protected due to the vaccine), E (exposed), I (infectious), and R
+    (recovered).
+
+-   **Covid_newlyExposed** \<- binary indicator if this is the time
+    point when individuals became exposed (i.e. infected) with
+    SARS-CoV-2.
+
+-   **Covid_everInfected** \<- binary indicator if an individual has
+    ever been infected with SARS-CoV-2 (includes exposed, infectious,
+    and recovered). This becomes 1 once an individual enters into the
+    exposed class.
+
+-   **Covid_everSymptInfected**\<- binary indicator if an individual has
+    ever been infected with symptomatic Covid (includes infected and
+    recovered). This becomes 1 once an individual becomes infected AND
+    is symptomatic. This can be used to calculate an accurate
+    measurement of VE against symptomatic infection.
+
+-   **Covid_exposed_timeLength** \<- number of days individual will be
+    in the "E" class (i.e. be considered exposed).
+
+-   **Covid_timeLeft_exposed** \<- number of days left before an
+    individual becomes infectious
+
+-   **Covid_infectious_timeLength** \<- number of days individual will
+    be in the "I" class (i.e. be infectious).
+
+-   **Covid_timeLeft_infectious** \<- number of days left before
+    individual will be moved to the "R" class (i.e. be considered
+    recovered).
+
+-   **Covid_symptomStatus** \<- individuals' symptom status at
+    infectiousness ("symptomatic" or "asymptomatic").
+
+##### Symptomatic due to other Etiologies(Non-Covid) Variables
+
+-   **Noncovid_status** \<- whether individuals have Covid-like symptoms
+    due to other etiologies. The options include "I" (symptomatic due to
+    other etiologies) or "N" (not symptomatic due to other etiologies).
+
+-   **NonCovid_newlyInfected**\<- binary indicator if this is the time
+    point when an individual has become symptomatic due to other
+    etiologies.
+
+-   **NonCovid_everSymptInfected**\<- binary indicator if an individual
+    has ever been symptomatic due to other etiologies.
+
+-   **Noncovid_infected_timeLength** \<- number of days individuals with
+    Covid-like symptoms will be in the "I" class (i.e. be symptomatic
+    due to other etiolgies).
+
+-   **Noncovid_timeLeft_infected** \<- number of days left before
+    individuals with Covid-like symptoms due to other etiologies will be
+    moved back to the "N" class (i.e. be non symptomatic).
+
+##### Testing & Healthcare Engagement Variables
+
+All variable names listed below are associated with three separate
+variables with the extension "equal", "modUnequal" and "highUnequal".
+These extensions are related to the difference in the level of
+testing where "equal" is equal testing, "modUnequal" is 1.76x higher testing, and "highUnequal" is 2.36x higher testing for vaccinated compared to unvaccinated.These testing differences stem from healthcare engagement differences where vaccinated individuals have either the same equal, 2.5x higher or 5x higher probabilities of having high healthcare engagement than their unvaccinated counterparts ("equal", "modUnequal" and "highUnequal") combined with the probability of testing given high or low healthcare engagement (high = 0.85 chance of testing; low=0.15 chance of testing). 
+
+-   **Covid_testedSymptExp** \<- how many times an individual has been
+    tested for Covid-19 while exposed to Covid19 while also having
+    symptoms due to other etiologies (and categorized as positive).
+
+-   **Covid_newly_testedSymptExp** \<-individual has been tested for
+    Covid-19 while exposed to Covid-19 and also have symptoms due to
+    other etiologies (and categorized as positive) at this time-step.
+
+-   **Covid_newly_testedSymptInf** \<-individual has been tested for
+    Covid-19 while infectious and symptomatic (and categorized as
+    positive) at this time-step. Individuals will be counted if they are
+    symptomatic whether it is due to symptomatic Covid-19 or when
+    asymptomatic or exposed to Covid-19 and co-infected with symptoms
+    due to other etiologies.
+
+-   **Covid_testedSymptInf** \<- number of times an individual has been
+    tested for Covid-19 while infectious with symptomatic (and
+    categorized as positive). Individuals will be counted if they are
+    EITHER symptomatic due to Covid-19 or when asymptomatic or exposed
+    to Covid-19 but co-infected with symptoms due to other etiologies.
+    This is used in the calculated version of VE against symptomatic
+    infection.
+
+-   **Covid_falseSymptPos**\<-indicates whether individuals have been
+    tested while only exposed to Covid-19 or have asymptomatic Covid-19
+    while co-infected with symptoms due to other etiologies. Here the
+    presence of symptoms are due to factors other than SARS-CoV-2 (Note:
+    The number of false positives should be negligible).
+
+-   **NonCovid_testedSymptInf** \<- number of times an individual has
+    been tested for Covid-19 while only having symptoms due to other
+    etiologies (will be classified as negative). This is used in the
+    aggregate dataset to help calculate VE against symptomatic infection
+    when using a test negative design.
+
+-   **NonCovid_newly_testedSymptInf** \<-individual tested for Covid-19
+    while only having symptoms due to other etiologies (and categorized
+    as negative) at this time-step.
+
+-   **Covid_falseNeg**\<- indicates whether individuals have been tested
+    due to symptoms from other etiologies (and classified as negative)
+    when they have previously been infected with symptomatic Covid
+    (**Covid_everSymptInfected** = "1") but never received a positive
+    symptomatic COVID-19 test (**Covid_testedSymptInf** = "0").
+
+-   **HCE_status**\<-indicates whether individuals have high
+    healthcare engagement ("high") or low healthcare engagement ("low"). This
+    variable is typically associated with whether individuals are likely
+    or unlikely to engage in SARS-CoV-2 testing ("low").
+
+
+### _agg_df and df.ve.susc Datasets_ 
+
+*Reminder: These are the datasets found in the "data" folder in the github repository. _df.ve.susc_ ending with "withTimeAnalysis" are different datasets; A variable list for these datasets can be found in the next section* 
+
+#### Column names (Variable Names)
+
+##### General SARS-CoV-2 and Other Etiologies of Symptoms Variables
+
+-   **CoInfect_unvac** \<- measure of the true number of *unvaccinated*
+    individuals who are Co-infected with both Covid-19 (exposed, and
+    asymptomatic or symptomatic infectious) and have symptoms due to other
+    etiologies.
+
+-   **CoInfect_vac** \<- measure of the true number of *vaccinated*
+    individuals who are Co-infected with both SARS-CoV-2 (exposed, and
+    asymptomatic or symptomatic infectious) and from other etiologies that
+    produce Covid-like symptoms.
+
+-   **Covid_cumInfect_unvac** \<- cumulative measure of the true number of
+    *unvaccinated* individuals who are or have been infected with Covid-19
+    (includes exposed, asymptomatic and symptomatic infectious, and
+    recovered).
+
+-   **Covid_cumInfect_vac** \<- cumulative measure of the true number of
+    *vaccinated* individuals who are or have been infected with Covid-19
+    (includes exposed, asymptomatic and symptomatic infectious, and
+    recovered).
+
+-   **Covid_cumPropSymptInfect**\<- cumulative measure of the true
+    proportion of all individuals who are or have been infected with
+    symptomatic Covid-19 (includes symptomatic infectious individuals who
+    may or may not have had symptoms due to other etiologies).
+
+-   **Covid_cumPropSymptInfect_unvac**\<- cumulative measure of the true
+    proportion of *unvaccinated* individuals who are or have been infected
+    with symptomatic Covid-19 (includes symptomatic infectious individuals
+    who may or may not have had symptoms due to other etiologies).
+
+-   **Covid_cumPropSymptInfect_vac**\<- cumulative measure of the true
+    proportion of *vaccinated* individuals who are or have been infected
+    with symptomatic Covid-19 (includes symptomatic infectious individuals
+    who may or may not have had symptoms due to other etiologies).
+
+-   **Covid_infect** \<- measure of the true number of all individuals who
+    are currently infected with Covid-19 (includes exposed, and asymptomatic
+    and symptomatic infectious who may or may not be symptomatic due to
+    other etiologies).
+
+-   **Covid_infect_unvac** \<- measure of the true number of
+    *unvaccinated* individuals who are currently infected with Covid-19
+    (includes exposed, and asymptomatic and symptomatic infectious who may
+    or may not be symptomatic due to other etiologies).
+
+-   **Covid_infect_vac** \<- measure of the true number of **vaccinated**
+    individuals who are currently infected with Covid-19 (includes exposed,
+    and asymptomatic and symptomatic infectious who may or may not be
+    symptomatic due to other etiologies).
+
+-   **Covid_propInfect**\<- measure of the true proportion of all
+    individuals who are currently infected with Covid-19 (includes exposed,
+    and asymptomatic and symptomatic infectious who may or may not be
+    symptomatic due to other etiologies).
+
+-   **Covid_propInfect_unvac**\<- measure of the true proportion of
+    *unvaccinated* individuals who are currently infected with Covid-19
+    (includes exposed, and asymptomatic and symptomatic infectious who may
+    or may not be symptomatic due to other etiologies).
+
+-   **Covid_propInfect_vac**\<- measure of the true proportion of
+    *vaccinated* individuals who are currently infected with Covid-19
+    (includes exposed, and asymptomatic and symptomatic infectious who may
+    or may not be symptomatic due to other etiologies).
+
+-   **Covid_propSymptInfect**\<- measure of the true proportion of all
+    individuals who are infected with symptomatic Covid-19 (includes
+    symptomatic infectious individuals who may or may not be symptomatic due
+    to other etiologies).
+
+-   **Covid_propSymptInfect_unvac**\<- measure of the true proportion of
+    *unvaccinated* individuals who are infected with symptomatic Covid-19
+    (includes symptomatic infectious individuals who may or may not be
+    symptomatic due to other etiologies).
+
+-   **Covid_propSymptInfect_vac**\<- measure of the true proportion of
+    *vaccinated* individuals who are currently infected with symptomatic
+    Covid-19 (includes symptomatic infectious individuals who may or may not
+    be symptomatic due to other etiologies).
+
+-   **Covid_symptInfect** \<- measure of the true number of all individuals
+    who are infected with symptomatic Covid-19 (includes symptomatic
+    infectious individuals who may or may not be symptomatic due to other
+    etiologies).
+
+-   **Covid_symptInfect_unvac** \<- measure of the true number of
+    *unvaccinated* individuals who are infected with symptomatic Covid-19
+    (includes symptomatic infectious individuals who may or may not be
+    symptomatic due to other etiologies).
+
+-   **Covid_symptInfect_vac** \<- measure of the true number of
+    *vaccinated* individuals who are currently infected with symptomatic
+    Covid-19 (includes symptomatic infectious individuals who may or may not
+    be symptomatic due to other etiologies).
+
+-   **NeverInfect_unvac** \<- measure of the true number of *unvaccinated*
+    individuals who have never been infected with Covid-19 (includes
+    exposed, infectious or recovered) or symptomatic due to other
+    etiologies.
+
+-   **NeverInfect_vac** \<- measure of the true number of *vaccinated*
+    individuals who have never been infected with Covid-19 (includes
+    exposed, infectious or recovered) or symptomatic due to other
+    etiologies.
+
+-   **NonCovid_cumPropSymptInfect** \<- cumulative measure of the true
+    proportion of all individuals who are or have been symptomatic due to
+    other etiologies and who are not nor have ever been infected with
+    symptomatic Covid-19 (i.e. symptomatic infectious individuals and those
+    recovered from being symptomatic infectious).
+
+-   **NonCovid_cumPropSymptInfect_unvac** \<- cumulative measure of the true
+    proportion of **unvaccinated** individuals who are or have been
+    symptomatic due to other etiologies and who are not nor have ever been
+    infected with symptomatic Covid-19 (i.e. symptomatic infectious
+    individuals and those recovered from being symptomatic infectious).
+
+-   **NonCovid_cumPropSymptInfect_vac** \<- cumulative measure of the true
+    proportion of **vaccinated** individuals who are or have been
+    symptomatic due to other etiologies and who are not nor have ever been
+    infected with symptomatic Covid-19 (i.e. symptomatic infectious
+    individuals and those recovered from being symptomatic infectious).
+
+-   **NonCovid_propSymptInfect**\<- measure of the true proportion of all
+    individuals who are symptomatic due to other etiologies (includes those
+    co-infected with Covid-19).
+
+-   **NonCovid_propSymptInfect_unvac**\<- measure of the true proportion of
+    **unvaccinated** individuals who are symptomatic due to other etiologies
+    (includes those co-infected with Covid-19).
+
+-   **NonCovid_propSymptInfect_vac**\<- measure of the true proportion of
+    **vaccinated** individuals who are symptomatic due to other etiologies
+    (includes those co-infected with Covid-19).
+
+-   **NonCovid_symptInfect** \<- measure of the true number of all
+    individuals who are symptomatic due to other etiologies (includes those
+    co-infected with Covid-19).
+
+-   **NonCovid_symptInfect_unvac** \<- measure of the true number of
+    **unvaccinated** individuals who are symptomatic due to other etiologies
+    (includes those co-infected with Covid-19).
+
+-   **NonCovid_symptInfect_vac** \<- measure of the true number of
+    **vaccinated** individuals who are symptomatic due to other etiologies
+    (includes those co-infected with Covid-19).
+
+-   **Sympt_coInfect_unvac** \<- measure of the true number of
+    **unvaccinated** individuals who are Co-infected with a symptomatic
+    Covid-19 (symptomatic infectious) and symptomatic due to other
+    etiologies.
+
+-   **Sympt_coInfect_vac** \<- measure of the true number of **vaccinated**
+    individuals who are infected with symptomatic Covid-19 (symptomatic
+    infectious) and symptomatic due to other etiologies.
+
+
+##### SARS-CoV-2 Variables at Specific Timepoints
+
+-   **Covid_cumPropSymptInfect_final** \<- cumulative measure of the true
+    number of all individuals who are or have been infected with symptomatic
+    Covid (includes symptomatic infectious and those recovered from a
+    Covid-19 symptomatic infection) at the end of an epidemic.
+
+-   **Covid_cumPropSymptInfect_highChange** \<- cumulative measure of the
+    true number of all individuals who are or have been infected with
+    symptomatic Covid (includes symptomatic infectious and those recovered
+    from a Covid-19 symptomatic infection) at the greatest positive growth
+    point during an epidemic. 
+
+-   **Covid_cumPropSymptInfect_peak** \<- cumulative measure of the true
+    number of all individuals who are or have been infected with symptomatic
+    Covid (includes symptomatic infectious and those recovered from a
+    Covid-19 symptomatic infection) at the peak of an epidemic.
+
+##### Variables for Creating True Vaccine Effectiveness Measurements 
+
+-   **Covid_cumSymptInfect**\<- cumulative measure of the true number of all
+    individuals who are or have been infected with symptomatic Covid
+    (includes symptomatic infectious and those recovered from a Covid-19
+    symptomatic infection).
+
+-   **Covid_cumSymptInfect_unvac** \<- cumulative measure of the true number
+    of *unvaccinated* individuals who have been infected with symptomatic
+    Covid-19 (includes symptomatic infectious and those recovered from a
+    Covid-19 symptomatic infection).
+
+-   **Covid_cumSymptInfect_vac** \<- cumulative measure of the true number
+    of *vaccinated* individuals who are or have ever been infected with
+    symptomatic Covid (includes symptomatic infectious and those recovered
+    from a Covid-19 symptomatic infection).
+
+-   **NonCovid_cumSymptInfect** \<- measure of the true number of all
+    individuals who have or have had other etiologies of Covid-like symptoms
+    and who are not nor have ever been infected with symptomatic Covid-19
+    (i.e. symptomatic infectious individuals and those recovered from being
+    symptomatic infectious).
+
+-   **NonCovid_cumSymptInfect_unvac** \<- measure of the true number of
+    *unvaccinated* individuals who have or have had other etiologies of
+    Covid-like symptoms and who are not nor have ever been infected with
+    symptomatic Covid-19 (i.e. symptomatic infectious individuals and those
+    recovered from being symptomatic infectious).
+
+-   **NonCovid_cumSymptInfect_vac** \<- measure of the true number of
+    *vaccinated* individuals who have or have had other etiologies of
+    Covid-like symptoms and who are not nor have never been infected with
+    symptomatic Covid-19 (i.e. symptomatic infectious individuals and those
+    recovered from being symptomatic infectious).
+
+-   **NonCovid_cumSymptInfect_covidSusc_unvac** \<- measure of the true
+    number of **unvaccinated** individuals who have or have had other
+    etiologies of Covid-like symptoms and have never been infected with
+    Covid-19 (i.e. those who are exposed to Covid-19 and those who are or
+    have been infectious or recovered from any type of Covid-19 infection).
+
+-   **NonCovid_cumSymptInfect_covidSusc_vac** \<- measure of the true number
+    of **vaccinated** individuals who have or have had other etiologies of
+    Covid-like symptoms and have never been infected with Covid-19 (i.e.
+    those who are exposed to Covid-19 and those who are or have been
+    infectious or recovered from any type of Covid-19 infection).
+
+##### True Vaccine Effectiveness Variables
+
+-   **VE_symptRR** \<- measure of vaccine effectiveness against symptomatic
+    Covid-19 infection using the relative risk (1 - relative risk *[RR]*)
+    where *RR* is defined as 1 - (**Covid_cumSymptInfect_vac** /*N.vac*)/
+    (**Covid_cumSymptInfect_unvac** /*N.unvac*) where *N.vac* and
+    *N.unvac* are the total numbers of vaccinated and unvaccinated
+    individuals in the population, respectively.
+
+-   **VE_symptOR** \<- measure of vaccine effectiveness against symptomatic
+    Covid-19 infection using the odds ratio (1 - odds ratio *[OR]*) where
+    *OR* is defined as 1 - (**Covid_cumSymptInfect_vac** /
+    **NonCovid_cumSymptInfect_vac**)/ (**Covid_cumSymptInfect_unvac** /
+    **NonCovid_cumSymptInfect_unvac**)/. Here the denominators only capture
+    those who have had Covid-like symptoms due to other etiologies without
+    ever having a symptomatic Covid-19 infection (thus exposed and
+    asymptomatic Covid-19 infections are ignored).
+
+-   **VE_symptSuscOR** \<- measure of vaccine effectiveness against
+    symptomatic Covid-19 infection using the odds ratio (1 - odds ratio
+    *[OR]*) where *OR* is defined as 1 - (**Covid_cumSymptInfect_vac** /
+    **NonCovid_cumSymptInfect_covidSusc_vac**)/
+    (**Covid_cumSymptInfect_unvac** /
+    **NonCovid_cumSymptInfect_covidSusc_unvac**)/. Here the denominators
+    capture those who have had Covid-like symptoms due to other etiologies
+    without ever having ANY Covid-19 infection (thus exposed and
+    asymptomatic Covid-19 infections are included).
+
+##### Testing-related Variables
+
+-   **Covid_cumPropSymptExpInfect_tested**\<- cumulative measure of the
+    proportion of all individuals who have been tested when infected with
+    Covid-19 while being symptomatic. This measurement includes individuals
+    who are symptomatic infectious, those who recovered from symptomatic
+    Covid-19 as well as those who are exposed to Covid-19 or had
+    asymptomatic Covid-19 when also having symptoms due to other etiologies.
+
+-   **Covid_cumPropSymptExpInfect_tested_unvac**\<- cumulative measure of
+    the proportion of *unvaccinated* individuals who have been tested when
+    infected with Covid-19 while being symptomatic. This measurement
+    includes individuals who are symptomatic infectious, those who recovered
+    from symptomatic Covid-19 as well as those who are exposed to Covid-19
+    or had asymptomatic Covid-19 when also having symptoms due to other
+    etiologies.
+
+-   **Covid_cumPropSymptExpInfect_tested_vac**\<- cumulative measure of the
+    proportion of *vaccinated* individuals who have been tested when
+    infected with Covid-19 while being symptomatic. This measurement
+    includes individuals who are symptomatic infectious, those who recovered
+    from symptomatic Covid-19 as well as those who are exposed to Covid-19
+    or had asymptomatic Covid-19 when also having symptoms due to other
+    etiologies.
+
+-   **CumNum_falseNeg_unvac**\<- Cumulative measure of the number of
+    *unvaccinated* individuals who have been recorded as having a negative
+    Covid-19 test when they have previously had a symptomatic Covid-19
+    infection.
+
+-   **CumNum_falseNeg_vac**\<- Cumulative measure of the number of
+    *vaccinated* individuals who have been recorded as having a negative
+    Covid-19 test when they have previously had a symptomatic Covid-19
+    infection.
+
+-   **CumNum_falsePos_unvac**\<- Cumulative measure of the number of
+    *unvaccinated* individuals who have been recorded as having a positive
+    Covid-19 test when they have a Covid-19 infection but are only
+    symptomatic due other etiologies. This would include those who are
+    either asymptomatic Covid-19 individuals or exposed Covid-19 individuals
+    who also have symptoms due to other etiologies. Note that for
+    individuals who are recorded as a false positive when they are only
+    exposed to Covid-19 and co-infected with other etiologies, the false
+    positive is reversed at the time the person becomes infectious if they
+    become symptomatic Covid-19 infectious individuals.
+
+-   **CumNum_falsePos_vac**\<- Cumulative measure of the number of
+    *vaccinated* individuals who have been recorded as having a positive
+    Covid-19 test when they have a Covid-19 infection but are only
+    symptomatic due other etiologies. This would include those who are
+    either asymptomatic Covid-19 individuals or exposed Covid-19 individuals
+    who are also who also have symptoms due to other etiologies. Note that
+    for individuals who are recorded as a false positive when they are only
+    exposed to Covid-19 and co-infected with another etiologies, the false
+    positive is reversed at the time the person becomes infectious if they
+    become symptomatic Covid-19 infectious individuals.
+
+-   **CumNum_misclass_unvac**\<- Cumulative measure of the number of
+    *unvaccinated* individuals who have ever been either classified as a
+    false positive (see **CumNum_falsePos_unvac** for false positive
+    definition) or as a false negative (see **CumNum_falseNeg_unvac** for
+    false negative definition).
+
+-   **CumNum_misclass_vac**\<- Cumulative measure of the number of
+    *vaccinated* individuals who have ever been either classified as a
+    false positive (see **CumNum_falsePos_vac** for false positive
+    definition) or as a false negative (see **CumNum_falseNeg_vac** for
+    false negative definition).
+
+-   **CumProp_falseNeg_unvac**\<- Cumulative proportion of *unvaccinated*
+    individuals who have been recorded as having a negative Covid-19 test
+    when they have previously had a symptomatic Covid-19 infection.
+
+-   **CumProp_falseNeg_vac**\<- Cumulative proportion of *vaccinated*
+    individuals who have been recorded as having a negative Covid-19 test
+    when they have previously had a symptomatic Covid-19 infection.
+
+-   **CumProp_falsePos_unvac**\<- Cumulative proportion of *unvaccinated*
+    individuals who have been recorded as having a positive Covid-19 test
+    when they have a Covid-19 infection but are symptomatic due to other
+    etiologies. See **CumNum_falsePos_unvac** for details.
+
+-   **CumProp_falsePos_vac**\<- Cumulative proportion of *unvaccinated*
+    individuals who have been recorded as having a positive Covid-19 test
+    when they have a Covid-19 infection but are symptomatic due to other
+    etiologies. See **CumNum_falsePos_vac** for details.
+
+-   **CumProp_misclass_unvac**\<- Cumulative proportion of *unvaccinated*
+    individuals who have ever been either classified as a false positive
+    (see **CumNum_falsePos_unvac** for false positive definition) or as a
+    false negative (see **CumNum_falseNeg_unvac** for false negative
+    definition).
+
+-   **CumProp_misclass_vac**\<- Cumulative proportion of *vaccinated*
+    individuals who have ever been either classified as a false positive
+    (see **CumNum_falsePos_vac** for false positive definition) or as a
+    false negative (see **CumNum_falseNeg_vac** for false negative
+    definition).
+
+-   **EverTested_unvac**\<- Cumulative measure of the number of
+    *unvaccinated* individuals who have tested when they have been
+    symptomatic due to Covid-19 or other etiologies, or both.
+
+-   **EverTested_vac**\<- Cumulative measure of the number of *vaccinated*
+    individuals who have tested when they have been symptomatic due to
+    Covid-19 or other etiologies, or both.
+    
+-   **FalseNeg_withTestSens_unvac**<-Cumulative number of *unvaccinated*
+    individuals who have been recorded as having a negative SARS-CoV-2 test due to imperfect test sensitivity. This variable is calculated in "Appendix Analyses_and_Figures.R"
+    
+-   **FalseNeg_withTestSens_vac**<-Cumulative number of *vaccinated*
+    individuals who have been recorded as having a negative SARS-CoV-2 test due to imperfect test sensitivity. This variable is calculated in "Appendix Analyses_and_Figures.R"
+
+-   **NonCovid_cumPropSymptInfect_tested**\<- cumulative measure of the
+    proportion of all individuals who tested when having symptoms due to
+    other etiologies who are not currently infected by Covid-19 nor have
+    ever tested positive when symptomatic and infected with Covid-19. This
+    measure excludes individuals who previously tested while having symptoms
+    due to other etiologies but who were also exposed to Covid-19 or had
+    asymptomatic Covid-19.
+
+-   **NonCovid_cumPropSymptInfect_tested_unvac**\<- cumulative measure of
+    the proportion of *unvaccinated* individuals who tested when having
+    symptoms due to other etiologies who are not currently infected by
+    Covid-19 nor have ever tested positive when symptomatic and infected
+    with Covid-19. This measure excludes individuals who previously tested
+    while having symptoms due to other etiologies but who were also exposed
+    to Covid-19 or had asymptomatic Covid-19.
+
+-   **NonCovid_cumPropSymptInfect_tested_vac**\<- cumulative measure of the
+    proportion of **vaccinated** individuals who tested when having symptoms
+    due to other etiologies who are not currently infected by Covid-19 nor
+    have ever tested positive when symptomatic and infected with Covid-19.
+    This measure excludes individuals who previously tested while having
+    symptoms due to other etiologies but who were also exposed to Covid-19
+    or had asymptomatic Covid-19.
+
+##### Variables for Creating Observed Vaccine Effectiveness 
+
+-   **Covid_cumSymptExpInfect_tested** \<- cumulative measure of the number
+    of all individuals who have been tested when infected with Covid-19
+    while being symptomatic. This measurement includes individuals who are
+    symptomatic infectious, those who recovered from symptomatic Covid-19 as
+    well as those who are exposed to Covid-19 or had asymptomatic Covid-19
+    when also symptomatic due to other etiologies.
+
+-   **Covid_cumSymptExpInfect_tested_unvac** \<- cumulative measure of the
+    number of *unvaccinated* individuals who have been tested when
+    infected with Covid-19 while being symptomatic. This measurement
+    includes individuals who are symptomatic infectious, those who recovered
+    from symptomatic Covid-19 as well as those who are exposed to Covid-19
+    or had asymptomatic Covid-19 when also symptomatic due to other
+    etiologies.
+
+-   **Covid_cumSymptExpInfect_tested_vac** \<- cumulative measure of the
+    number of *vaccinated* individuals who have been tested when infected
+    with Covid-19 while being symptomatic. This measurement includes
+    individuals who are symptomatic infectious, those who recovered from
+    symptomatic Covid-19 as well as those who are exposed to Covid-19 or had
+    asymptomatic Covid-19 when when also symptomatic due to other
+    etiologies.
+
+-   **NonCovid_cumSymptInfect_tested** \<- cumulative measure of the number
+    of all individuals who tested when having Covid-like symptoms due to
+    other etiologies who are not currently infected by Covid-19 nor have
+    ever tested positive when symptomatic and infected with Covid-19. This
+    measure excludes individuals who previously tested while having symptoms
+    due to other etiologies but who were also exposed to Covid-19 or had
+    asymptomatic Covid-19.
+
+-   **NonCovid_cumSymptInfect_tested_unvac** \<- cumulative measure of the
+    number of *unvaccinated* individuals who tested when having Covid-like
+    symptoms due to other etiologies who are not currently infected by
+    Covid-19 nor have ever tested positive when symptomatic and infected
+    with Covid-19. This measure excludes individuals who previously tested
+    while having symptoms from other etiologies but who were also exposed to
+    Covid-19 or had asymptomatic Covid-19.
+
+-   **NonCovid_cumSymptInfect_tested_vac** \<- cumulative measure of the
+    number of *vaccinated* individuals who tested when having Covid-like
+    symptoms due to other etiologies who are not currently infected by
+    Covid-19 nor have ever tested positive when symptomatic and infected
+    with Covid-19. This measure excludes individuals who previously tested
+    while having symptoms from other etiologies but who were also exposed to
+    Covid-19 or had asymptomatic Covid-19.
+
+##### Observed Vaccine Effectiveness Variables
+
+-   **VE_symptRR_observed** \<- measure of observed vaccine effectiveness
+    against symptomatic Covid-19 infection using the estimated relative risk
+    (1 - relative risk$_O$ *[RR$_O$]*) where *RR$_O$* is defined as 1 -
+    (**Covid_cumSymptExpInfect_tested_vac** /*N.vac*)/
+    (**Covid_cumSymptExpInfect_tested_unvac** /*N.unvac*) where *N.vac*
+    and *N.unvac* are the total numbers of vaccinated and unvaccinated
+    individuals in the population, respectively. As this measure uses
+    observed cumulative symptomatic infections, it may be influenced by
+    false positives and false negatives.
+
+-   **VE_symptOR_observed** \<- measure of observed vaccine effectiveness
+    against symptomatic Covid-19 infection using the estimated odds ratio (1 - odds         ratio$_O$ *[OR$_O$]*) where *OR$_O$* is defined as 1 -
+    (**Covid_cumSymptExpInfect_tested_vac** /
+    **NonCovid_cumSymptInfect_tested_vac**)/
+    (**Covid_cumSymptExpInfect_tested_unvac** /
+    **NonCovid_cumSymptInfect_tested_unvac**). As this measure uses observed
+    cumulative symptomatic infections, it may be influenced by false
+    positives and false negatives.
+
+
+##### Observed Vaccine Effectiveness Bias Variables
+
+-   **VE_symptRR_degUnder_highChange_trueVeff**\<- a measure of how much
+    observed vaccine effectiveness (calculated using relative risk)
+    underestimates true vaccine efficacy against susceptibility at the
+    greatest positive growth point during an epidemic.
+
+-   **VE_symptOR_degUnder_highChange_trueVeff**\<- a measure of how much
+    observed vaccine effectiveness (calculated using odds ratio)
+    underestimates true vaccine efficacy against susceptibility at the
+    greatest positive growth point during an epidemic.
+
+-   **VE_symptRR_degUnder_highChange_targEst**\<- a measure of how much
+    observed vaccine effectiveness (calculated using relative risk)
+    underestimates the target estimate of vaccine effectiveness (calculated
+    using relative risk with everyone in the population) at the greatest
+    positive growth point during an epidemic.
+
+-   **VE_symptOR_degUnder_highChange_targEst**\<- a measure of how much
+    observed vaccine effectiveness (calculated using odds ratio)
+    underestimates the target estimate of vaccine effectiveness (calculated
+    using odds ratio with everyone in the population) at the greatest
+    positive growth point during an epidemic.
+
+-   **VE_symptRR_degUnder_peak_trueVeff**\<- a measure of how much observed
+    vaccine effectiveness (calculated using relative risk) underestimates
+    true vaccine efficacy against susceptibility at the peak of an epidemic.
+
+-   **VE_symptOR_degUnder_peak_trueVeff**\<- a measure of how much observed
+    vaccine effectiveness (calculated using odds ratio) underestimates true
+    vaccine efficacy against susceptibility at the peak of an epidemic.
+
+-   **VE_symptRR_degUnder_peak_targEst**\<- a measure of how much observed
+    vaccine effectiveness (calculated using relative risk) underestimates
+    the target estimate of vaccine effectiveness (calculated using relative
+    risk with everyone in the population) at the peak of an epidemic.
+
+-   **VE_symptOR_degUnder_peak_targEst**\<- a measure of how much observed
+    vaccine effectiveness (calculated using odds ratio) underestimates the
+    target estimate of vaccine effectiveness (calculated using odds ratio
+    with everyone in the population) at the peak of an epidemic.
+    
+-  **VE_symptRR_degUnderNeg_testSens**\<-measure of the extent to which observed vaccine effectiveness
+    against symptomatic SARS-CoV-2 infection (calculated using the relative risk) underestimates true symptomatic vaccine effectiveness when also varying test sensitivity.This variable is calculated in "Appendix Analyses_and_Figures.R"
+    
+-  **VE_symptOR_degUnderNeg_testSens**\<-measure of the extent to which observed vaccine effectiveness
+    against symptomatic SARS-CoV-2 infection (calculated using the odds ratio) underestimates true symptomatic vaccine effectiveness when also varying test sensitivity. This variable is calculated in "Appendix Analyses_and_Figures.R"
+
+##### Indicator Variables
+
+-   **Label_veSusc** \<- a string in the form "VE Susc.= x" where "x"
+    indicates the true vaccine efficacy against susceptibility.
+
+-   **Label_veInfect** \<- a string in the form "VE Infect.= y" where "y"
+    indicates the true vaccine efficacy against infectiousness.
+
+-   **Label_veJoint** \<- a string in the form "VE Susc. = x VE Infect.= y"
+    where "x" indicates the true vaccine efficacy against susceptibility and
+    "y" indicates the true vaccine efficacy against infectiousness.
+
+-   **Label\_ testingDiff** \<- a string that has three possible labels,
+    "equal", "modUnequal" and "highUnequal" indicating the difference in
+    testing levels between vaccinated and unvaccinated individuals. The
+    string "equal" means there are no testing difference between vaccinated
+    and unvaccinated, "modUnequal" means vaccinated have 1.76 times higher
+    testing than unvaccinated and "highUnequal" means vaccinated have 2.36
+    times higher testing than unvaccinated.
+    
+-   **Label\_ epiPhase** \<- a string that has two possible labels,
+    "Highest Growth", and "Peak" indicating the phase of the epidemic that estimates are taken.This variable is calculated in "Appendix Analyses_and_Figures.R"
+
+-   **t** \<- the timestep that a study has been conducted
+
+-   **Test_sens** \<- the level of test sensitivity.This variable is calculated in "Appendix Analyses_and_Figures.R"
+
+-   **TestedStarted_bin** \<- a binary indicator indicating whether testing
+    has occurred at this timestep (***t***) (TRUE=testing occurred or
+    FALSE=no testing).
+
+-   **t_highChange**\<- the timestep during the epidemic where there is the
+    greatest positive change in Covid-19 infections.
+
+-   **t_peak** \<- the timestep during the epidemic where the proportion
+    infected with Covid-19 is at its maximum.
+    
+-   **totalNum_sims**\<- the total number of epidemic realizations used in that scenario
+
+-   **VE_susc** \<- the true vaccine efficacy against susceptibility.
+
+-   **VE_infect**\<- the true vaccine efficacy against infectiousness.
+
+-   **Covid_probTrans**\<- the probability of Covid-19 transmission given
+    contact.
+
+-   **Covid_propAsympt**\<- the probability of being asymptomatic given
+    Covid-19 infection.
+
+-   **NonCovid_propSympt** \<- the proportion (i.e. prevalance) of the population that has
+    symptoms due to other etiologies at any given timepoint.
+
+-   **Epi_simNum**\<- the epidemic realization number [i.e. simulation
+    number]. The number ranges from 1-100.
+
+-   **Seed_num**\<- the seed number that recreates the simulated epidemic
+    data.
+
+-   **Avg_numContacts**\<- the average number of contacts each individual has
+    in the network. Calculated by taking the average degree of the network
+    (*contact_matrix*).
+    
+### _df.ve.susc0.55_withTimeAnalysis and df.ve.susc0.1_withTimeAnalysis Datasets_ 
+
+
+#### Column names (Variable Names)
+
+-   **Intercept_coef_timeDep_VeOR**\<- Intercept from a time-adjusted logistic regression model for estimating symptomatic vaccine effectiveness using the test-negative design.
+
+-   **TimeStep_coef_timeDep_VeOR**\<-Coefficient for time since the start of a study from a time-adjusted logistic regression model for estimating symptomatic vaccine effectiveness using the test-negative design.
+
+-   **VacStatus_coef_timeDep_VeOR**\<-Coefficient for vaccination status from a time-adjusted logistic regression model for estimating symptomatic vaccine effectiveness using the test-negative design.
+
+-   **VacStatus_coef_timeDep_VeRR**\<-Coefficient for vaccination status from a Cox model for estimating symptomatic vaccine effectiveness using the cohort design.
+
+-   **VE_symptOR_timeDep**\<-Estimate of vaccine effectiveness against symptomatic COVID-19 infection based on a time-adjusted logistic regression model using a test-negative design. Here vaccine effectiveness is defined as VE$_{logit}$ = (1 - odds ratio$_{logit}$ *[OR$_{logit}$]*) where *OR$_{logit}=$* $exp$(**VacStatus_coef_timeDep_VeOR**).
+
+-   **VE_symptRR_timeDep**\<-Estimate of vaccine effectiveness against symptomatic COVID-19 infection based on a Cox model using a cohort design. Here vaccine effectiveness is defined as VE$_{HR}$= (1 - hazard ratio *[HR]*) where *HR=* $exp$(**VacStatus_coef_timeDep_VeRR**).
+
+ The following variables are also included in these datasets and are defined above: **Label_testingDiff**,	**t**, **t_highChange**, **VE_symptOR_observed** and **VE_symptRR_observed**.
+
+
+	
+
+
+
+
+
+
+
